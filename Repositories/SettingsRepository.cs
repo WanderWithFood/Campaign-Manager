@@ -1,6 +1,8 @@
-﻿namespace CampaignManagement.Repositories
+using CampaignManagement.Interfaces;
+
+namespace CampaignManagement.Repositories
 {
-    public class SettingsRepository
+    public class SettingsRepository : ISettingsRepository
     {
     }
 }

@@ -1,6 +1,8 @@
-﻿namespace CampaignManagement.Controllers
+using CampaignManagement.Helpers;
+
+namespace CampaignManagement.Controllers
 {
-    public class InfluencersStatController
+    public class InfluencersStatController : BaseController
     {
     }
 }

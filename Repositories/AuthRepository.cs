@@ -48,7 +48,7 @@ namespace CampaignManagement.Repositories
                     data = new { token, userId = user.mstUserId, userName = user.name, accessLevel = user.userAccessLevel }
                 };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponseDTO.FailureResponse(clsResponseText.sSomethingWentWrong);
             }
@@ -130,7 +130,7 @@ namespace CampaignManagement.Repositories
 
                 return ApiResponseDTO.SuccessResponse(clsResponseText.sSavedSuccessfully);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponseDTO.FailureResponse(clsResponseText.sSomethingWentWrong);
             }

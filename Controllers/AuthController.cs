@@ -47,7 +47,7 @@ namespace CampaignManagement.Controllers
 
             var result = await _authRepository.LoginAsync(loginDTO.Email, loginDTO.Password);
 
-            if (result.success)
+            if (result.success && result.data != null)
             {
                 var data = result.data as dynamic;
                 var token = (string)data.token;

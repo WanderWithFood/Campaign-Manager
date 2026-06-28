@@ -25,7 +25,7 @@ namespace CampaignManagement.Helpers.Middlewares
             return Convert.ToBase64String(tokenData);
         }
 
-        public static AuthTokenPayload DecryptToken(string encryptedToken)
+        public static AuthTokenPayload? DecryptToken(string encryptedToken)
         {
             var tokenData = Convert.FromBase64String(encryptedToken);
 

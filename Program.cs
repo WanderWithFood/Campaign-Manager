@@ -28,6 +28,11 @@ builder.Services.AddScoped<IApiResponseRepository, ApiResponseRepository>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<ICommonRepository, CommonRepository>();
 builder.Services.AddScoped<IPermissionHelper, PermissionHelper>();
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+builder.Services.AddScoped<ICampaignsRepository, CampaignsRepository>();
+builder.Services.AddScoped<IInfluencersStatRepository, InfluencersStatRepository>();
+builder.Services.AddScoped<IReportsRepository, ReportsRepository>();
+builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
 
 // Register Middlewares
 builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();

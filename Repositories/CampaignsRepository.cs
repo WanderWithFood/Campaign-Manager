@@ -1,6 +1,8 @@
-﻿namespace CampaignManagement.Repositories
+using CampaignManagement.Interfaces;
+
+namespace CampaignManagement.Repositories
 {
-    public class CampaignsRepository
+    public class CampaignsRepository : ICampaignsRepository
     {
     }
 }

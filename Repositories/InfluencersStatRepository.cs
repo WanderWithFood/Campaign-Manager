@@ -1,6 +1,8 @@
-﻿namespace CampaignManagement.Repositories
+using CampaignManagement.Interfaces;
+
+namespace CampaignManagement.Repositories
 {
-    public class InfluencersStatRepository
+    public class InfluencersStatRepository : IInfluencersStatRepository
     {
     }
 }

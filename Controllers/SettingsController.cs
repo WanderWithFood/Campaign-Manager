@@ -1,6 +1,8 @@
-﻿namespace CampaignManagement.Controllers
+using CampaignManagement.Helpers;
+
+namespace CampaignManagement.Controllers
 {
-    public class SettingsController
+    public class SettingsController : BaseController
     {
     }
 }

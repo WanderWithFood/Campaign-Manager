@@ -1,6 +1,8 @@
-﻿namespace CampaignManagement.Controllers
+using CampaignManagement.Helpers;
+
+namespace CampaignManagement.Controllers
 {
-    public class ReportsController
+    public class ReportsController : BaseController
     {
     }
 }
