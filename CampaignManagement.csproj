@@ -22,6 +22,11 @@
 
   <ItemGroup>
     <Folder Include="Services\" />
+    <Folder Include="Views\Dashboard\" />
+    <Folder Include="Views\Campaigns\" />
+    <Folder Include="Views\Influencers stat\" />
+    <Folder Include="Views\Settings\" />
+    <Folder Include="Views\Reports\" />
     <Folder Include="wwwroot\img\" />
     <Folder Include="wwwroot\logs\" />
   </ItemGroup>
