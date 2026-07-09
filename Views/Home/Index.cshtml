@@ -1,8 +1,38 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model List<string>
+
+@{
+ViewData["Title"]="Campaign Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container mt-4">
+
+<h2>Campaign Dashboard</h2>
+
+<div class="row">
+
+@foreach(var campaign in Model)
+{
+<div class="col-md-4">
+
+<div class="card mb-3">
+
+<div class="card-body">
+
+<h5>@campaign</h5>
+
+<p>Status: Active</p>
+
+<button class="btn btn-primary">
+View
+</button>
+
+</div>
+
+</div>
+
+</div>
+}
+
+</div>
+
 </div>

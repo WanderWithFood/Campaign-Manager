@@ -3,8 +3,8 @@ namespace CampaignManagement.Models.DTOs
     public class ApiResponseDTO
     {
         public bool success { get; set; }
-        public string message { get; set; }
-        public object data { get; set; }
+        public string message { get; set; } = string.Empty;
+        public object? data { get; set; }
         public int statusCode { get; set; } = 200;
 
         public static ApiResponseDTO SuccessResponse(string message, int statusCode = 200)

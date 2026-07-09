@@ -38,6 +38,10 @@ namespace CampaignManagement.Helpers.Middlewares
                 try
                 {
                     var tokenInfo = TokenHelper.DecryptToken(authToken);
+                    if (tokenInfo == null)
+                    {
+                        throw new InvalidOperationException("Invalid token payload");
+                    }
 
                     currentUserId = tokenInfo.UserId;
                     accessLevel = tokenInfo.AccessLevel;

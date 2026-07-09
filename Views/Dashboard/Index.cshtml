@@ -1,0 +1,168 @@
+@model CampaignManagement.Models.DTOs.DashboardStatsDTO
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="page-title mb-1">Welcome back !</h1>
+        <p class="text-muted mb-0">Here's what's happening with your collaborations</p>
+    </div>
+    <div class="dropdown">
+        <button class="btn btn-outline-secondary dropdown-toggle bg-white" type="button">
+            Last 30 Days
+        </button>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span>Active Campaigns</span>
+            <i class="fa-solid fa-play text-success kpi-icon bg-light"></i>
+        </div>
+        <div class="kpi-value">@Model.activeCampaigns</div>
+        <div class="kpi-subtext text-success"><i class="fa-solid fa-arrow-up"></i> Ongoing tracking</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span>Total Campaigns</span>
+            <i class="fa-solid fa-folder-open text-primary kpi-icon bg-light"></i>
+        </div>
+        <div class="kpi-value">@Model.totalCampaigns</div>
+        <div class="kpi-subtext">All time campaigns</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span>Total Reach</span>
+            <i class="fa-solid fa-eye text-warning kpi-icon bg-light"></i>
+        </div>
+        <div class="kpi-value">@Model.totalReach</div>
+        <div class="kpi-subtext text-success"><i class="fa-solid fa-arrow-up"></i> 12.5% vs last month</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span>Total Spend</span>
+            <i class="fa-solid fa-indian-rupee-sign text-danger kpi-icon bg-light"></i>
+        </div>
+        <div class="kpi-value">₹ @Model.totalSpend.ToString("N0")</div>
+        <div class="kpi-subtext">Budget utilized</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span>Total Downloads</span>
+            <i class="fa-solid fa-download text-info kpi-icon bg-light"></i>
+        </div>
+        <div class="kpi-value">@Model.totalDownloads</div>
+        <div class="kpi-subtext text-success"><i class="fa-solid fa-arrow-up"></i> 8.3% vs last 30 days</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span>Avg. Cost per Download</span>
+            <i class="fa-solid fa-chart-pie text-secondary kpi-icon bg-light"></i>
+        </div>
+        <div class="kpi-value">₹ @Model.avgCostPerDownload.ToString("N0")</div>
+        <div class="kpi-subtext">Efficiency metric</div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Active Campaigns List Panel -->
+    <div class="col-lg-6 mb-4">
+        <div class="custom-card h-100">
+            <h5 class="fw-bold mb-4">Active Campaigns</h5>
+            
+            <div class="active-campaigns-list">
+                @foreach (var camp in Model.activeCampaignsList)
+                {
+                    <div class="active-campaign-item d-flex align-items-center justify-content-between p-3 mb-3 border rounded-3 bg-light">
+                        <div>
+                            <h6 class="fw-bold mb-1">@camp.name</h6>
+                            <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill px-2 py-1 fs-7">@camp.description</span>
+                            <div class="text-muted fs-7 mt-2"><i class="fa-regular fa-clock"></i> @camp.daysLeft days left</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="text-primary fw-bold d-block mb-1">@camp.reach Reach</span>
+                            <div class="progress" style="width: 100px; height: 6px;">
+                                <div class="progress-bar" role="progressbar" style="width: @(camp.completionPercentage)%;" aria-valuenow="@camp.completionPercentage" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <span class="text-muted fs-8">@camp.completionPercentage% Budget</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Downloads Growth Line Chart Panel -->
+    <div class="col-lg-6 mb-4">
+        <div class="custom-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0">Downloads Growth</h5>
+                <select class="form-select form-select-sm bg-white" style="width: 120px;">
+                    <option>Weekly</option>
+                    <option>Monthly</option>
+                </select>
+            </div>
+            
+            <div class="chart-container" style="position: relative; height: 260px; width: 100%;">
+                <canvas id="downloadsGrowthChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const ctx = document.getElementById('downloadsGrowthChart').getContext('2d');
+            
+            const labels = @Html.Raw(Json.Serialize(Model.downloadsGrowth.Select(x => x.label)));
+            const dataPoints = @Html.Raw(Json.Serialize(Model.downloadsGrowth.Select(x => x.value)));
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Downloads Growth',
+                        data: dataPoints,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#6366f1',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            min: 0,
+                            grid: {
+                                color: '#e2e8f0'
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

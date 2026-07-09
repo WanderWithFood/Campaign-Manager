@@ -16,6 +16,9 @@ namespace CampaignManagement.Helpers
             try
             {
                 var tokenInfo = TokenHelper.DecryptToken(authToken);
+                if (tokenInfo == null)
+                    return (null, 0);
+
                 return (tokenInfo.UserId, tokenInfo.AccessLevel);
             }
             catch
