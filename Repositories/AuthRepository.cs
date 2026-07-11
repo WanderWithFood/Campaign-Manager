@@ -24,6 +24,11 @@ namespace CampaignManagement.Repositories
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+                {
+                    return ApiResponseDTO.FailureResponse("Username and password are required");
+                }
+
                 var user = await _context.mstUsers
                     .FirstOrDefaultAsync(u => u.email == username && u.password == password && u.isActive);
 
@@ -41,6 +46,11 @@ namespace CampaignManagement.Repositories
 
                 var token = TokenHelper.EncryptToken(tokenPayload);
 
+                if (string.IsNullOrEmpty(token))
+                {
+                    return ApiResponseDTO.FailureResponse("Failed to generate authentication token");
+                }
+
                 return new ApiResponseDTO
                 {
                     success = true,
@@ -48,8 +58,9 @@ namespace CampaignManagement.Repositories
                     data = new { token, userId = user.mstUserId, userName = user.name, accessLevel = user.userAccessLevel }
                 };
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"Login error: {ex.Message}");
                 return ApiResponseDTO.FailureResponse(clsResponseText.sSomethingWentWrong);
             }
         }
@@ -58,44 +69,91 @@ namespace CampaignManagement.Repositories
         #region OTP Page Interface Implementations
         public string GenerateOTP()
         {
-            Random random = new Random();
-            return random.Next(100000, 999999).ToString();
+            try
+            {
+                Random random = new Random();
+                return random.Next(100000, 999999).ToString();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"OTP generation error: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task SaveOTPAsync(int userId, string otp)
         {
-            var otpRecord = new trnUserOtps
+            try
             {
-                userId = userId,
-                otp = otp,
-                createdAt = DateTime.Now,
-                expiresAt = DateTime.Now.AddMinutes(5),
-                isUsed = false
-            };
+                if (userId <= 0 || string.IsNullOrWhiteSpace(otp))
+                {
+                    throw new ArgumentException("Invalid userId or OTP");
+                }
 
-            _context.trnUserOtps.Add(otpRecord);
-            await _context.SaveChangesAsync();
+                var otpRecord = new trnUserOtps
+                {
+                    userId = userId,
+                    otp = otp,
+                    createdAt = DateTime.Now,
+                    expiresAt = DateTime.Now.AddMinutes(5),
+                    isUsed = false
+                };
+
+                _context.trnUserOtps.Add(otpRecord);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"OTP save error: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<bool> VerifyOTPAsync(int userId, string otp)
         {
-            var otpRecord = await _context.trnUserOtps
-                .Where(o => o.userId == userId && o.otp == otp && !o.isUsed && o.expiresAt > DateTime.Now)
-                .OrderByDescending(o => o.createdAt)
-                .FirstOrDefaultAsync();
+            try
+            {
+                if (userId <= 0 || string.IsNullOrWhiteSpace(otp))
+                {
+                    return false;
+                }
 
-            if (otpRecord == null) return false;
+                var otpRecord = await _context.trnUserOtps
+                    .Where(o => o.userId == userId && o.otp == otp && !o.isUsed && o.expiresAt > DateTime.Now)
+                    .OrderByDescending(o => o.createdAt)
+                    .FirstOrDefaultAsync();
 
-            otpRecord.isUsed = true;
-            await _context.SaveChangesAsync();
-            return true;
+                if (otpRecord == null) return false;
+
+                otpRecord.isUsed = true;
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"OTP verification error: {ex.Message}");
+                return false;
+            }
         }
 
         public async Task<bool> SendOTPAsync(string email, string otp)
         {
-            // TODO: Implement email sending via Brevo or SMTP
-            // For now, return true (OTP is saved to DB, can be verified manually)
-            return true;
+            try
+            {
+                if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(otp))
+                {
+                    return false;
+                }
+
+                // TODO: Implement email sending via Brevo or SMTP
+                // For now, return true (OTP is saved to DB, can be verified manually)
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"OTP send error: {ex.Message}");
+                return false;
+            }
         }
         #endregion
 
@@ -104,6 +162,11 @@ namespace CampaignManagement.Repositories
         {
             try
             {
+                if (registerDTO == null || string.IsNullOrWhiteSpace(registerDTO.Email) || string.IsNullOrWhiteSpace(registerDTO.Password))
+                {
+                    return ApiResponseDTO.FailureResponse("Email and password are required");
+                }
+
                 var existingUser = await _context.mstUsers
                     .FirstOrDefaultAsync(u => u.email == registerDTO.Email);
 
@@ -114,7 +177,7 @@ namespace CampaignManagement.Repositories
 
                 var user = new mstUsers
                 {
-                    name = registerDTO.Name,
+                    name = registerDTO.Name ?? "User",
                     gender = registerDTO.Gender,
                     phoneNumber = registerDTO.PhoneNumber,
                     email = registerDTO.Email,
@@ -130,8 +193,9 @@ namespace CampaignManagement.Repositories
 
                 return ApiResponseDTO.SuccessResponse(clsResponseText.sSavedSuccessfully);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"Registration error: {ex.Message}");
                 return ApiResponseDTO.FailureResponse(clsResponseText.sSomethingWentWrong);
             }
         }
@@ -139,12 +203,35 @@ namespace CampaignManagement.Repositories
 
         public async Task<ApiResponseDTO> CheckEmailExistsAsync(string email)
         {
-            var exists = await _context.mstUsers.AnyAsync(u => u.email == email);
-            return new ApiResponseDTO
+            try
             {
-                success = true,
-                data = new { exists }
-            };
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    return new ApiResponseDTO
+                    {
+                        success = false,
+                        message = "Email is required",
+                        data = new { exists = false }
+                    };
+                }
+
+                var exists = await _context.mstUsers.AnyAsync(u => u.email == email);
+                return new ApiResponseDTO
+                {
+                    success = true,
+                    data = new { exists }
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Email check error: {ex.Message}");
+                return new ApiResponseDTO
+                {
+                    success = false,
+                    message = "Failed to check email",
+                    data = new { exists = false }
+                };
+            }
         }
     }
 }
