@@ -76,7 +76,7 @@ namespace CampaignManagement.Controllers
 
                     var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
                     var fileExtension = Path.GetExtension(profileImage.FileName).ToLower();
-                    if (!allowedExtensions.Contains(fileExtension);
+                    if (!allowedExtensions.Contains(fileExtension))
                     {
                         ViewBag.Error = "Invalid file format. Only JPG, PNG, and GIF are allowed.";
                         return RedirectToAction("Index");
