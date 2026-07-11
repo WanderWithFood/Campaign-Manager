@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using CampaignManagement.Helpers;
 using CampaignManagement.Helpers.DbContexts;
@@ -7,6 +8,15 @@ using CampaignManagement.Interfaces;
 using CampaignManagement.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Fix: ASP.NET Core auto-registers a Windows EventLog logging provider at Warning level
+// on Windows by default. If the process account can't write to the Windows Event Log,
+// the very first warning-level log call (e.g. from HttpsRedirectionMiddleware) throws
+// an AggregateException and crashes the request pipeline. Clear providers and use
+// Console/Debug only, which always work regardless of OS permissions.
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 builder.Services.AddControllersWithViews();
 builder.Services.Configure<FormOptions>(options =>
@@ -41,6 +51,11 @@ builder.Services.AddTransient<ActivityLoggingMiddleware>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.AddDistributedMemoryCache();
+var dataProtectionKeysPath = Path.Combine(builder.Environment.ContentRootPath, "DataProtection-Keys");
+Directory.CreateDirectory(dataProtectionKeysPath);
+builder.Services.AddDataProtection()
+    .SetApplicationName("CampaignManagement")
+    .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath));
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);

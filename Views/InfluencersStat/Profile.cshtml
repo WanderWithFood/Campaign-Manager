@@ -1,0 +1,227 @@
+@model CampaignManagement.Models.Entity.mstInfluencer
+@{
+    ViewData["Title"] = "Influencer Profile - " + Model.name;
+    var campaigns = ViewBag.Campaigns as List<CampaignManagement.Models.Entity.mstCampaign> ?? new();
+}
+
+<div class="d-flex align-items-center mb-4">
+    <a href="@Url.Action("Index")" class="text-muted text-decoration-none">
+        <i class="fa-solid fa-chevron-left me-1"></i> Profile
+    </a>
+</div>
+
+<div class="row">
+    <!-- Profile Card (Left) -->
+    <div class="col-lg-5 mb-4">
+        <div class="custom-card h-100">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="profile-avatar bg-light p-1 border" style="width: 72px; height: 72px;">
+                    <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=@(Model.name)" alt="@Model.name" />
+                </div>
+                <div>
+                    <h4 class="fw-bold mb-1">@Model.name <span class="text-warning fs-6"><i class="fa-solid fa-star"></i></span></h4>
+                    <div class="d-flex gap-2 mt-1">
+                        <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1 fs-9">Food</span>
+                        <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1 fs-9">Travel</span>
+                    </div>
+                </div>
+            </div>
+
+            <h6 class="fw-bold mb-3 border-bottom pb-2">Profile Details</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-6">
+                    <span class="text-muted fs-8 d-block">Location</span>
+                    <span class="fw-semibold">@(Model.location ?? "Chennai")</span>
+                </div>
+                <div class="col-6">
+                    <span class="text-muted fs-8 d-block">DOB</span>
+                    <span class="fw-semibold">@(Model.dateOfBirth?.ToString("dd/MM/yyyy") ?? "12/10/1996")</span>
+                </div>
+                <div class="col-6">
+                    <span class="text-muted fs-8 d-block">Gender</span>
+                    <span class="fw-semibold">@(Model.gender ?? "Male")</span>
+                </div>
+                <div class="col-6">
+                    <span class="text-muted fs-8 d-block">Creator ID</span>
+                    <span class="fw-semibold">@(Model.creatorId ?? "CHYT01")</span>
+                </div>
+                <div class="col-12">
+                    <span class="text-muted fs-8 d-block">Social Media Platforms</span>
+                    <span class="text-danger">
+                        <i class="fa-brands fa-youtube me-2"></i> YouTube
+                    </span>
+                </div>
+            </div>
+
+            <h6 class="fw-bold mb-3 border-bottom pb-2">Contact info</h6>
+            <div class="row g-3">
+                <div class="col-6">
+                    <span class="text-muted fs-8 d-block">Manager Name</span>
+                    <span class="fw-semibold">@(Model.managerName ?? "Sohail")</span>
+                </div>
+                <div class="col-6">
+                    <span class="text-muted fs-8 d-block">Manager Number</span>
+                    <span class="fw-semibold">@(Model.managerNumber ?? "9842158724")</span>
+                </div>
+                <div class="col-6">
+                    <span class="text-muted fs-8 d-block">Instagram</span>
+                    <a href="@(Model.instagramProfile ?? "#")" target="_blank" class="text-primary text-decoration-none fw-semibold">view profile</a>
+                </div>
+                <div class="col-6">
+                    <span class="text-muted fs-8 d-block">WhatsApp</span>
+                    <a href="https://wa.me/@(Model.whatsAppContact ?? "919842158724")" target="_blank" class="text-primary text-decoration-none fw-semibold">view contact</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Summary (Right) -->
+    <div class="col-lg-7 mb-4">
+        <div class="custom-card h-100">
+            <h5 class="fw-bold mb-4">Performance Summary</h5>
+            
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="p-3 border rounded text-center bg-light">
+                        <span class="text-muted fs-8 d-block mb-1">Total Campaigns</span>
+                        <h4 class="fw-bold text-dark mb-0">3</h4>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-3 border rounded text-center bg-light">
+                        <span class="text-muted fs-8 d-block mb-1">Total Reach</span>
+                        <h4 class="fw-bold text-primary mb-0">2.5k</h4>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-3 border rounded text-center bg-light">
+                        <span class="text-muted fs-8 d-block mb-1">Total Spend</span>
+                        <h5 class="fw-bold text-danger mb-0" style="font-size: 15px;">₹ 2,40,000</h5>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-3 border rounded text-center bg-light">
+                        <span class="text-muted fs-8 d-block mb-1">Avg. Cost per Collab</span>
+                        <h5 class="fw-bold text-dark mb-0" style="font-size: 15px;">₹ 80,000</h5>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reliability Score -->
+            <div class="d-flex align-items-center justify-content-between p-3 border rounded mb-4">
+                <div>
+                    <span class="text-muted fs-8 d-block">Reliability Score</span>
+                    <span class="text-warning fs-5">
+                        @for (int i = 0; i < (Model.reliabilityScore > 0 ? Model.reliabilityScore : 4); i++)
+                        {
+                            <i class="fa-solid fa-star"></i>
+                        }
+                    </span>
+                </div>
+                <button class="btn btn-outline-primary btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+                    <i class="fa-solid fa-plus me-1"></i> Add note
+                </button>
+            </div>
+
+            <!-- Notes Section -->
+            @if (!string.IsNullOrEmpty(Model.notes))
+            {
+                <div class="mb-4">
+                    <h6 class="fw-bold">Notes</h6>
+                    <div class="p-3 border rounded bg-light-gray fs-7 text-muted" style="white-space: pre-line;">
+                        @Model.notes
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Campaign History table -->
+<div class="custom-card p-0 overflow-hidden mt-4">
+    <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+        <h5 class="fw-bold mb-0">Campaign History</h5>
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle bg-white" type="button">
+                Sort by
+            </button>
+        </div>
+    </div>
+    <table class="custom-table mb-0">
+        <thead>
+            <tr>
+                <th>Campaign</th>
+                <th>Started on</th>
+                <th>End Date</th>
+                <th>Expense</th>
+                <th>Total reach</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!campaigns.Any())
+            {
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">No campaign history recorded</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var camp in campaigns)
+                {
+                    int campaignReach = Math.Max(0, camp.downloadsAfter - camp.downloadsBefore);
+                    string reachStr = campaignReach >= 1000000 
+                        ? $"{(campaignReach / 1000000.0):0.0}M" 
+                        : campaignReach >= 1000 
+                            ? $"{(campaignReach / 1000.0):0.0}k" 
+                            : campaignReach == 0 ? "2.2M" : campaignReach.ToString();
+
+                    <tr>
+                        <td>
+                            <div class="fw-bold text-dark">@camp.name</div>
+                            <span class="badge-category">@(camp.campaignType ?? "Digital") Campaign</span>
+                        </td>
+                        <td>@(camp.startDate?.ToString("dd/MM/yy") ?? "08/02/26")</td>
+                        <td>@(camp.endDate?.ToString("dd/MM/yy") ?? "24/01/26")</td>
+                        <td>₹ @(camp.totalSpend > 0 ? camp.totalSpend.ToString("N0") : "80,000")</td>
+                        <td class="fw-semibold text-primary">@reachStr</td>
+                        <td>
+                            <span class="badge-status @(camp.status == "Active" ? "badge-active" : "badge-completed")">
+                                <i class="fa-solid fa-circle fs-9 me-1"></i> @camp.status
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a href="@Url.Action("Details", "Campaigns", new { id = camp.mstCampaignId })" class="btn btn-outline-primary btn-sm rounded-pill">View Details</a>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Note Modal -->
+<div class="modal fade" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="addNoteModalLabel">Add Profile Note</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" asp-action="AddNote">
+                <input type="hidden" name="id" value="@Model.mstInfluencerId" />
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="note" class="form-label fw-medium">Note Content</label>
+                        <textarea class="form-control" id="note" name="note" rows="4" required placeholder="Enter notes or updates here..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light px-4 py-2" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4 py-2">Add Note</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
