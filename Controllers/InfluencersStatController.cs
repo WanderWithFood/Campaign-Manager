@@ -25,69 +25,124 @@ namespace CampaignManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(string? search)
         {
-            var (userId, accessLevel) = GetUserContext();
-            if (!userId.HasValue)
+            try
             {
-                return RedirectToAction("Login", "Auth");
+                var (userId, accessLevel) = GetUserContext();
+                if (!userId.HasValue)
+                {
+                    return RedirectToAction("Login", "Auth");
+                }
+
+                await SetPagePermissionsAsync(_permissionHelper, "InfluencersStat", "Index");
+
+                var influencers = await _influencersStatRepository.GetInfluencersAsync(search);
+                ViewBag.Search = search;
+                return View(influencers ?? new List<mstInfluencer>());
             }
-
-            await SetPagePermissionsAsync(_permissionHelper, "InfluencersStat", "Index");
-
-            var influencers = await _influencersStatRepository.GetInfluencersAsync(search);
-            ViewBag.Search = search;
-            return View(influencers);
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in InfluencersStatController.Index: {ex.Message}");
+                ViewBag.Error = "Failed to load influencers. Please try again.";
+                return View(new List<mstInfluencer>());
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> Profile(int id)
         {
-            var (userId, accessLevel) = GetUserContext();
-            if (!userId.HasValue)
+            try
             {
-                return RedirectToAction("Login", "Auth");
+                if (id <= 0)
+                {
+                    return BadRequest("Invalid influencer ID");
+                }
+
+                var (userId, accessLevel) = GetUserContext();
+                if (!userId.HasValue)
+                {
+                    return RedirectToAction("Login", "Auth");
+                }
+
+                await SetPagePermissionsAsync(_permissionHelper, "InfluencersStat", "Profile");
+
+                var influencer = await _influencersStatRepository.GetInfluencerByIdAsync(id);
+                if (influencer == null)
+                {
+                    return NotFound("Influencer not found");
+                }
+
+                var allCampaigns = await _campaignsRepository.GetCampaignsAsync();
+                ViewBag.Campaigns = allCampaigns ?? new List<mstCampaign>();
+
+                return View(influencer);
             }
-
-            await SetPagePermissionsAsync(_permissionHelper, "InfluencersStat", "Profile");
-
-            var influencer = await _influencersStatRepository.GetInfluencerByIdAsync(id);
-            if (influencer == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                Console.WriteLine($"Error in InfluencersStatController.Profile: {ex.Message}");
+                ViewBag.Error = "Failed to load influencer profile. Please try again.";
+                return View();
             }
-
-            // Fetch campaign history metrics - retrieve all campaigns for the demo/stats
-            var allCampaigns = await _campaignsRepository.GetCampaignsAsync();
-            // Filter campaigns where this influencer is active (in our seed data, campaignId 4 has influencerId 1)
-            // For now, let's pass all campaigns to show rich data in the history table matching screenshot (page 9)
-            ViewBag.Campaigns = allCampaigns;
-
-            return View(influencer);
         }
 
         [HttpPost]
         public async Task<IActionResult> AddNote(int id, string note)
         {
-            var (userId, accessLevel) = GetUserContext();
-            if (!userId.HasValue)
+            try
             {
-                return RedirectToAction("Login", "Auth");
-            }
+                if (id <= 0)
+                {
+                    return BadRequest("Invalid influencer ID");
+                }
 
-            await _influencersStatRepository.AddNoteAsync(id, note);
-            return RedirectToAction("Profile", new { id = id });
+                if (string.IsNullOrWhiteSpace(note))
+                {
+                    ViewBag.Error = "Note cannot be empty";
+                    return RedirectToAction("Profile", new { id });
+                }
+
+                var (userId, accessLevel) = GetUserContext();
+                if (!userId.HasValue)
+                {
+                    return RedirectToAction("Login", "Auth");
+                }
+
+                await _influencersStatRepository.AddNoteAsync(id, note);
+                return RedirectToAction("Profile", new { id });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in InfluencersStatController.AddNote: {ex.Message}");
+                ViewBag.Error = "Failed to add note. Please try again.";
+                return RedirectToAction("Profile", new { id });
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> SaveInfluencer(mstInfluencer influencer)
         {
-            var (userId, accessLevel) = GetUserContext();
-            if (!userId.HasValue)
+            try
             {
-                return RedirectToAction("Login", "Auth");
-            }
+                if (influencer == null)
+                {
+                    ViewBag.Error = "Invalid influencer data";
+                    return RedirectToAction("Index");
+                }
 
-            await _influencersStatRepository.SaveInfluencerAsync(influencer);
-            return RedirectToAction("Index");
+                var (userId, accessLevel) = GetUserContext();
+                if (!userId.HasValue)
+                {
+                    return RedirectToAction("Login", "Auth");
+                }
+
+                await _influencersStatRepository.SaveInfluencerAsync(influencer);
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in InfluencersStatController.SaveInfluencer: {ex.Message}");
+                ViewBag.Error = "Failed to save influencer. Please try again.";
+                return RedirectToAction("Index");
+            }
         }
     }
 }
