@@ -70,7 +70,7 @@ namespace CampaignManagement.Controllers
                         IsEssential = true,
                         Expires = DateTimeOffset.Now.AddMinutes(30),
                         SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict,
-                        Secure = true
+                        Secure = false
                     });
 
                     return RedirectToAction("Index", "Home");

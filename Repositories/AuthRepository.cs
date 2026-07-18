@@ -58,10 +58,18 @@ namespace CampaignManagement.Repositories
                     data = new { token, userId = user.mstUserId, userName = user.name, accessLevel = user.userAccessLevel }
                 };
             }
+            //catch (Exception ex)
+            //{
+            //    Console.WriteLine($"Login error: {ex.Message}");
+            //    return ApiResponseDTO.FailureResponse(clsResponseText.sSomethingWentWrong);
+            //}
             catch (Exception ex)
             {
-                Console.WriteLine($"Login error: {ex.Message}");
-                return ApiResponseDTO.FailureResponse(clsResponseText.sSomethingWentWrong);
+                Console.WriteLine("========== LOGIN ERROR ==========");
+                Console.WriteLine(ex.ToString());
+                Console.WriteLine("=================================");
+
+                return ApiResponseDTO.FailureResponse(ex.ToString());
             }
         }
         #endregion
