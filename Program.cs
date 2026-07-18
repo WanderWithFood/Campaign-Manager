@@ -31,7 +31,17 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 
 builder.Services.AddControllers();
 builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
-builder.Services.AddDbContext<CampaignDbContext>(options => options.UseMySql(builder.Configuration.GetConnectionString("MySQLConnectionString"), new MySqlServerVersion(new Version(8, 0, 36))));
+//builder.Services.AddDbContext<CampaignDbContext>(options => options.UseMySql(builder.Configuration.GetConnectionString("MySQLConnectionString"), new MySqlServerVersion(new Version(8, 0, 36))));
+var cs = builder.Configuration.GetConnectionString("MySQLConnectionString");
+
+Console.WriteLine("================================");
+Console.WriteLine(cs);
+Console.WriteLine("================================");
+
+builder.Services.AddDbContext<CampaignDbContext>(options =>
+    options.UseMySql(
+        cs,
+        new MySqlServerVersion(new Version(8, 0, 36))));
 
 // Register Repositories
 builder.Services.AddScoped<IApiResponseRepository, ApiResponseRepository>();
