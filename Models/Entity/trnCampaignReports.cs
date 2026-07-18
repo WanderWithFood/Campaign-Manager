@@ -1,7 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace CampaignManagement.Models.Entity
 {
     public class trnCampaignReports
     {
+        [Key]
         public int trnCampaignReportId { get; set; }
         public int campaignId { get; set; }
         public int impressions { get; set; }
