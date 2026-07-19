@@ -7,10 +7,11 @@
     var stakeholders = ViewBag.Stakeholders as List<CampaignManagement.Models.Entity.mstStakeholder> ?? new();
     var linkedInfluencer = ViewBag.Influencer as CampaignManagement.Models.Entity.mstInfluencer;
     var influencers = ViewBag.Influencers as List<CampaignManagement.Models.Entity.mstInfluencer> ?? new();
+    var partners = ViewBag.CampaignPartners as List<CampaignManagement.Models.Entity.mstInfluencer> ?? new();
     
     // Compute budget summary with 3 types
     decimal basePayAmount = Model.basePay;
-    decimal incentiveTotal = Model.incentiveAmount * (Model.totalReach > 0 ? Model.totalReach : 100); // estimate if no reach yet
+    decimal incentiveTotal = Model.incentiveAmount * ((Model.totalReach ?? 0) > 0 ? Model.totalReach.GetValueOrDefault() : 100); // estimate if no reach yet
     decimal allowanceAmount = Model.allowance;
     decimal allocatedBudget = Model.budget;
     decimal totalSpent = Model.totalSpend;
@@ -87,52 +88,58 @@
             <!-- Stats Grid -->
             <h5 class="fw-bold mb-3">Campaign Stats</h5>
             <div class="row g-3 mb-4">
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-4">
                     <div class="p-3 border rounded bg-light">
                         <span class="text-muted fs-8 d-block mb-1">Start Date</span>
                         <div class="fw-bold fs-6"><i class="fa-solid fa-calendar-days text-danger me-2"></i>@(Model.startDate?.ToString("dd/MM/yyyy") ?? "--")</div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-4">
                     <div class="p-3 border rounded bg-light">
                         <span class="text-muted fs-8 d-block mb-1">End Date</span>
                         <div class="fw-bold fs-6"><i class="fa-solid fa-calendar-days text-danger me-2"></i>@(Model.endDate?.ToString("dd/MM/yyyy") ?? "--")</div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-4">
                     <div class="p-3 border rounded bg-light">
                         <span class="text-muted fs-8 d-block mb-1">Duration</span>
                         <div class="fw-bold fs-6"><i class="fa-solid fa-hourglass-half text-danger me-2"></i>@(Model.duration ?? 9) Days</div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-4">
                     <div class="p-3 border rounded bg-light">
                         <span class="text-muted fs-8 d-block mb-1">Days Remaining</span>
                         <div class="fw-bold fs-6"><i class="fa-solid fa-clock text-danger me-2"></i>@daysRemaining Days</div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-4">
                     <div class="p-3 border rounded bg-light">
                         <span class="text-muted fs-8 d-block mb-1">Total spend</span>
                         <div class="fw-bold fs-6"><i class="fa-solid fa-indian-rupee-sign text-danger me-2"></i>₹ @Model.totalSpend.ToString("N0")</div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-4">
                     <div class="p-3 border rounded bg-light">
                         <span class="text-muted fs-8 d-block mb-1">Conversion rate</span>
                         <div class="fw-bold fs-6"><i class="fa-solid fa-chart-line text-danger me-2"></i>@Model.conversionRate%</div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-4">
                     <div class="p-3 border rounded bg-light">
                         <span class="text-muted fs-8 d-block mb-1">Incentive per Code</span>
                         <div class="fw-bold fs-6"><i class="fa-solid fa-coins text-danger me-2"></i>₹ @Model.incentiveAmount.ToString("N0")</div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-4">
+                    <div class="p-3 border rounded bg-light">
+                        <span class="text-muted fs-8 d-block mb-1">Incentive to be Paid</span>
+                        <div class="fw-bold fs-6"><i class="fa-solid fa-indian-rupee-sign text-success me-2"></i>₹ @incentiveTotal.ToString("N0")</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
                     <div class="p-3 border rounded bg-light">
                         <span class="text-muted fs-8 d-block mb-1">Total Reach</span>
-                        <div class="fw-bold fs-6"><i class="fa-solid fa-eye text-danger me-2"></i>@(Model.totalReach > 0 ? Model.totalReach.ToString("N0") : "--")</div>
+                        <div class="fw-bold fs-6"><i class="fa-solid fa-eye text-danger me-2"></i>@((Model.totalReach ?? 0) > 0 ? Model.totalReach.GetValueOrDefault().ToString("N0") : "--")</div>
                     </div>
                 </div>
             </div>
@@ -319,31 +326,64 @@
         <div class="row">
             <div class="col-md-5 mb-4">
                 <div class="custom-card">
-                    <h5 class="fw-bold mb-4">Influencers List</h5>
+                    <h5 class="fw-bold mb-3">Collaborator Inventory</h5>
+                    
+                    <!-- Add Collaborator Form -->
+                    <form method="post" asp-action="AddPartner" class="d-flex gap-2 mb-4">
+                        <input type="hidden" name="campaignId" value="@Model.mstCampaignId" />
+                        <select name="influencerId" class="form-select form-select-sm" required>
+                            <option value="">Add Partner...</option>
+                            @foreach (var inf in influencers.Where(i => i.mstInfluencerId != Model.influencerId && !partners.Any(p => p.mstInfluencerId == i.mstInfluencerId)))
+                            {
+                                <option value="@inf.mstInfluencerId">@inf.name</option>
+                            }
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3">Link</button>
+                    </form>
+
+                    <h6 class="fw-bold mb-3">Campaign Influencers</h6>
                     @if (linkedInfluencer != null)
                     {
-                        <div class="d-flex align-items-center justify-content-between border rounded p-3 bg-light mb-3">
+                        <div class="d-flex align-items-center justify-content-between border rounded p-3 bg-light mb-2">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="profile-avatar mb-0">
+                                <div class="profile-avatar mb-0" style="width: 40px; height: 40px;">
                                     <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=@(linkedInfluencer.name)" alt="@linkedInfluencer.name" />
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold mb-1">@linkedInfluencer.name</h6>
-                                    @if (!string.IsNullOrEmpty(linkedInfluencer.category))
-                                    {
-                                        @foreach (var cat in linkedInfluencer.category.Split(',', StringSplitOptions.TrimEntries))
-                                        {
-                                            <span class="badge bg-danger-subtle text-danger rounded-pill fs-9">@cat</span>
-                                        }
-                                    }
+                                    <h6 class="fw-bold mb-1 fs-7">@linkedInfluencer.name <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-0 fs-9 ms-1">Primary</span></h6>
+                                    <span class="text-muted fs-8">@(linkedInfluencer.niche ?? "Food, Travel")</span>
                                 </div>
                             </div>
-                            <a href="@Url.Action("Profile", "InfluencersStat", new { id = linkedInfluencer.mstInfluencerId })" class="btn btn-outline-primary btn-sm rounded-pill">View Profile</a>
+                            <a href="@Url.Action("Profile", "InfluencersStat", new { id = linkedInfluencer.mstInfluencerId })" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1 fs-8">Profile</a>
                         </div>
                     }
-                    else
+
+                    @foreach (var partner in partners)
                     {
-                        <div class="text-muted p-3 border rounded bg-light">No influencer linked to this campaign.</div>
+                        <div class="d-flex align-items-center justify-content-between border rounded p-3 bg-light mb-2">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="profile-avatar mb-0" style="width: 40px; height: 40px;">
+                                    <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=@(partner.name)" alt="@partner.name" />
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1 fs-7">@partner.name <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-0 fs-9 ms-1">Partner</span></h6>
+                                    <span class="text-muted fs-8">@(partner.niche ?? "Food, Travel")</span>
+                                </div>
+                            </div>
+                            <div class="d-inline-flex gap-2">
+                                <a href="@Url.Action("Profile", "InfluencersStat", new { id = partner.mstInfluencerId })" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1 fs-8">Profile</a>
+                                <form method="post" asp-action="RemovePartner" class="d-inline">
+                                    <input type="hidden" name="campaignId" value="@Model.mstCampaignId" />
+                                    <input type="hidden" name="influencerId" value="@partner.mstInfluencerId" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 fs-8" onclick="return confirm('Remove collaborator?')"><i class="fa-regular fa-trash-can"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                    
+                    @if (linkedInfluencer == null && !partners.Any())
+                    {
+                        <div class="text-muted p-3 border rounded bg-light">No influencers linked to this campaign.</div>
                     }
                 </div>
             </div>
@@ -570,7 +610,7 @@
                                 <option value="">Select Influencer</option>
                                 @foreach (var inf in influencers)
                                 {
-                                    <option value="@inf.mstInfluencerId" @(Model.influencerId == inf.mstInfluencerId ? "selected" : "")>@inf.name (@(inf.creatorId ?? "N/A"))</option>
+                                    <option value="@inf.mstInfluencerId" selected="@(Model.influencerId == inf.mstInfluencerId)">@inf.name (@(inf.creatorId ?? "N/A"))</option>
                                 }
                             </select>
                         </div>

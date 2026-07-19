@@ -19,5 +19,7 @@ namespace CampaignManagement.Helpers.DbContexts
         public DbSet<trnDeliverable> trnDeliverables { get; set; } = null!;
         public DbSet<trnExpense> trnExpenses { get; set; } = null!;
         public DbSet<trnCampaignReports> trnCampaignReports { get; set; } = null!;
+        public DbSet<trnCampaignPartner> trnCampaignPartners { get; set; } = null!;
+        public DbSet<mstCreatorCode> mstCreatorCodes { get; set; } = null!;
     }
 }

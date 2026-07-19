@@ -77,6 +77,7 @@ namespace CampaignManagement.Controllers
                     .Where(c => c.influencerId == id || c.creatorName == influencer.name)
                     .ToList() ?? new List<mstCampaign>();
                 ViewBag.Campaigns = linkedCampaigns;
+                ViewBag.CreatorCodeUsages = await _influencersStatRepository.GetCreatorCodeUsagesAsync(id);
 
                 return View(influencer);
             }

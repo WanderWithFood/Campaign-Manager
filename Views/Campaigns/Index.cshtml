@@ -81,7 +81,7 @@
             {
                 @foreach (var camp in Model.Where(c => c.status == activeStatus))
                 {
-                    int campaignReach = camp.totalReach > 0 ? camp.totalReach : Math.Max(0, camp.downloadsAfter - camp.downloadsBefore);
+                    int campaignReach = (camp.totalReach ?? 0) > 0 ? camp.totalReach.GetValueOrDefault() : Math.Max(0, camp.downloadsAfter - camp.downloadsBefore);
                     string reachStr = campaignReach >= 1000000 
                         ? $"{(campaignReach / 1000000.0):0.0}M" 
                         : campaignReach >= 1000 

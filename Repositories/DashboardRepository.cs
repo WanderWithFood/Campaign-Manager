@@ -48,7 +48,7 @@ namespace CampaignManagement.Repositories
             int totalDownloads = campaigns.Sum(c => Math.Max(0, c.downloadsAfter - c.downloadsBefore));
             
             // Reach - use totalReach field if populated, otherwise estimate
-            int totalReachVal = campaigns.Sum(c => c.totalReach > 0 ? c.totalReach : Math.Max(0, c.downloadsAfter - c.downloadsBefore));
+            int totalReachVal = campaigns.Sum(c => (c.totalReach ?? 0) > 0 ? c.totalReach.GetValueOrDefault() : Math.Max(0, c.downloadsAfter - c.downloadsBefore));
             string totalReachStr = totalReachVal >= 1000000 
                 ? $"{(totalReachVal / 1000000.0):0.0}M" 
                 : totalReachVal >= 1000 
@@ -76,7 +76,7 @@ namespace CampaignManagement.Repositories
                         daysLeft = Math.Max(0, diff.Days);
                     }
                     
-                    int campaignReach = c.totalReach > 0 ? c.totalReach : Math.Max(0, c.downloadsAfter - c.downloadsBefore);
+                    int campaignReach = (c.totalReach ?? 0) > 0 ? c.totalReach.GetValueOrDefault() : Math.Max(0, c.downloadsAfter - c.downloadsBefore);
                     string reachStr = campaignReach >= 1000000 
                         ? $"{(campaignReach / 1000000.0):0.0}M" 
                         : campaignReach >= 1000 

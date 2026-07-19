@@ -91,6 +91,7 @@ namespace CampaignManagement.Controllers
                     linkedInfluencer = await _influencersRepository.GetInfluencerByIdAsync(campaign.influencerId.Value);
                 }
                 ViewBag.Influencer = linkedInfluencer;
+                ViewBag.CampaignPartners = await _repository.GetCampaignPartnersAsync(id) ?? new List<mstInfluencer>();
                 
                 // Load all influencers for the edit form dropdown
                 var influencers = await _influencersRepository.GetInfluencersAsync();
@@ -333,6 +334,48 @@ namespace CampaignManagement.Controllers
             {
                 Console.WriteLine($"Error in CampaignsController.UpdateTotalReach: {ex.Message}");
                 return RedirectToAction("Details", new { id = campaignId });
+            }
+        }
+        #endregion
+
+        #region Multiple Collaborators / Partners
+        [HttpPost]
+        public async Task<IActionResult> AddPartner(int campaignId, int influencerId)
+        {
+            try
+            {
+                if (campaignId <= 0 || influencerId <= 0)
+                {
+                    return BadRequest("Invalid campaign or influencer ID");
+                }
+
+                await _repository.AddCampaignPartnerAsync(campaignId, influencerId);
+                return RedirectToAction("Details", new { id = campaignId, tab = "Partners" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in CampaignsController.AddPartner: {ex.Message}");
+                return RedirectToAction("Details", new { id = campaignId, tab = "Partners" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RemovePartner(int campaignId, int influencerId)
+        {
+            try
+            {
+                if (campaignId <= 0 || influencerId <= 0)
+                {
+                    return BadRequest("Invalid campaign or influencer ID");
+                }
+
+                await _repository.RemoveCampaignPartnerAsync(campaignId, influencerId);
+                return RedirectToAction("Details", new { id = campaignId, tab = "Partners" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in CampaignsController.RemovePartner: {ex.Message}");
+                return RedirectToAction("Details", new { id = campaignId, tab = "Partners" });
             }
         }
         #endregion

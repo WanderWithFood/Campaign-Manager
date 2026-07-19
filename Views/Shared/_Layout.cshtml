@@ -62,6 +62,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="@Url.Action("Index", "CreatorCodes")" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "CreatorCodes" ? "active" : "")">
+                            <i class="fa-solid fa-qrcode nav-icon"></i>
+                            <span class="nav-text">Creator Codes</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="@Url.Action("Index", "Reports")" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Reports" ? "active" : "")">
                             <i class="fa-solid fa-file-invoice-dollar nav-icon"></i>
                             <span class="nav-text">Reports</span>

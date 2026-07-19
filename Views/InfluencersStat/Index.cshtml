@@ -57,7 +57,7 @@
                         </div>
                         <div>
                             <h6 class="fw-bold mb-1">@inf.name</h6>
-                            <span class="text-muted fs-8">Food Exploration and Travel content creators</span>
+                            <span class="text-muted fs-8">@(inf.niche ?? "Food Exploration and Travel content creator")</span>
                         </div>
                     </div>
 
@@ -125,11 +125,15 @@
                             <label for="inf_phoneNumber" class="form-label fw-medium">Phone Number</label>
                             <input type="tel" class="form-control" id="inf_phoneNumber" name="phoneNumber" placeholder="e.g. +91 98420 12345">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label for="inf_category" class="form-label fw-medium">Category</label>
                             <input type="text" class="form-control" id="inf_category" name="category" placeholder="e.g. Food, Travel">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <label for="inf_niche" class="form-label fw-medium">Niche</label>
+                            <input type="text" class="form-control" id="inf_niche" name="niche" placeholder="e.g. Street Food, Baking">
+                        </div>
+                        <div class="col-md-4">
                             <label for="inf_location" class="form-label fw-medium">Location</label>
                             <input type="text" class="form-control" id="inf_location" name="location" placeholder="e.g. Chennai">
                         </div>

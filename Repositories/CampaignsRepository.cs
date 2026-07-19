@@ -200,6 +200,50 @@ namespace CampaignManagement.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
+        
+        public async Task<List<mstInfluencer>> GetCampaignPartnersAsync(int campaignId)
+        {
+            var partnerIds = await _context.trnCampaignPartners
+                .Where(p => p.campaignId == campaignId && p.isActive)
+                .Select(p => p.influencerId)
+                .ToListAsync();
+
+            return await _context.mstInfluencers
+                .Where(i => partnerIds.Contains(i.mstInfluencerId) && i.isActive)
+                .ToListAsync();
+        }
+
+        public async Task<bool> AddCampaignPartnerAsync(int campaignId, int influencerId)
+        {
+            var exists = await _context.trnCampaignPartners
+                .AnyAsync(p => p.campaignId == campaignId && p.influencerId == influencerId && p.isActive);
+                
+            if (exists) return true;
+
+            var partner = new trnCampaignPartner
+            {
+                campaignId = campaignId,
+                influencerId = influencerId,
+                isActive = true,
+                created_at = DateTime.Now
+            };
+
+            await _context.trnCampaignPartners.AddAsync(partner);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> RemoveCampaignPartnerAsync(int campaignId, int influencerId)
+        {
+            var partner = await _context.trnCampaignPartners
+                .FirstOrDefaultAsync(p => p.campaignId == campaignId && p.influencerId == influencerId && p.isActive);
+
+            if (partner == null) return false;
+
+            partner.isActive = false;
+            await _context.SaveChangesAsync();
+            return true;
+        }
         #endregion
     }
 }

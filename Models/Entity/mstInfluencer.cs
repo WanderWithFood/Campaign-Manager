@@ -14,6 +14,7 @@ namespace CampaignManagement.Models.Entity
         public string name { get; set; } = string.Empty;
         
         public string? category { get; set; }
+        public string? niche { get; set; }
         public string? location { get; set; }
         public DateTime? dateOfBirth { get; set; }
         public string? gender { get; set; }

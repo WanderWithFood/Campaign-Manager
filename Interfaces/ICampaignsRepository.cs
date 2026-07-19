@@ -22,5 +22,9 @@ namespace CampaignManagement.Interfaces
         Task<bool> DeleteStakeholderAsync(int stakeholderId);
         
         Task<bool> UpdateTotalReachAsync(int campaignId, int totalReach);
+        
+        Task<List<mstInfluencer>> GetCampaignPartnersAsync(int campaignId);
+        Task<bool> AddCampaignPartnerAsync(int campaignId, int influencerId);
+        Task<bool> RemoveCampaignPartnerAsync(int campaignId, int influencerId);
     }
 }

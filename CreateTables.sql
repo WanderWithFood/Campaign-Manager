@@ -151,6 +151,7 @@ CREATE TABLE IF NOT EXISTS `mstInfluencers` (
     `mstInfluencerId` INT NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(255) NOT NULL,
     `category` VARCHAR(255) NULL,
+    `niche` VARCHAR(255) NULL,
     `location` VARCHAR(100) NULL,
     `dateOfBirth` DATETIME NULL,
     `gender` VARCHAR(20) NULL,
@@ -291,6 +292,7 @@ ALTER TABLE `mstCampaigns`
 -- Schema Updates: mstInfluencers - new fields
 -- ============================================================
 ALTER TABLE `mstInfluencers`
+    ADD COLUMN IF NOT EXISTS `niche` VARCHAR(255) NULL AFTER `category`,
     ADD COLUMN IF NOT EXISTS `phoneNumber` VARCHAR(20) NULL AFTER `notes`,
     ADD COLUMN IF NOT EXISTS `shortDescription` TEXT NULL AFTER `phoneNumber`,
     ADD COLUMN IF NOT EXISTS `languagesFamiliar` VARCHAR(500) NULL AFTER `shortDescription`,

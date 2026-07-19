@@ -39,6 +39,8 @@ namespace CampaignManagement.Models.Entity
         
         // Budget breakdown: 3 types
         public decimal basePay { get; set; } = 0.00m;
+        
+        [Column("incentive")]
         public decimal incentiveAmount { get; set; } = 0.00m;
         public decimal budgetThreshold { get; set; } = 0.00m;
         public decimal allowance { get; set; } = 0.00m;
@@ -47,7 +49,7 @@ namespace CampaignManagement.Models.Entity
         public string? termsAndConditions { get; set; }
         public string? influencerTag { get; set; }
         public string? endReason { get; set; }
-        public int totalReach { get; set; } = 0;
+        public int? totalReach { get; set; } = 0;
         
         public string status { get; set; } = "Active";
         

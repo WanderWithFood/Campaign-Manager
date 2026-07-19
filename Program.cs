@@ -53,6 +53,7 @@ builder.Services.AddScoped<ICampaignsRepository, CampaignsRepository>();
 builder.Services.AddScoped<IInfluencersStatRepository, InfluencersStatRepository>();
 builder.Services.AddScoped<IReportsRepository, ReportsRepository>();
 builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
+builder.Services.AddScoped<ICreatorCodesRepository, CreatorCodesRepository>();
 
 // Register Middlewares
 builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
@@ -74,6 +75,7 @@ builder.Services.AddSession(options =>
 });
 
 var app = builder.Build();
+
 app.UseStaticFiles();
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 app.UseMiddleware<ActivityLoggingMiddleware>();

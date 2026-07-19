@@ -10,5 +10,6 @@ namespace CampaignManagement.Interfaces
         Task<mstInfluencer?> GetInfluencerByIdAsync(int id);
         Task<mstInfluencer> SaveInfluencerAsync(mstInfluencer influencer);
         Task<bool> AddNoteAsync(int influencerId, string note);
+        Task<int> GetCreatorCodeUsagesAsync(int influencerId);
     }
 }

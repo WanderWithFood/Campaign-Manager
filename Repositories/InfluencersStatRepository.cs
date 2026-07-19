@@ -71,6 +71,7 @@ namespace CampaignManagement.Repositories
                 {
                     existing.name = influencer.name;
                     existing.category = influencer.category;
+                    existing.niche = influencer.niche;
                     existing.location = influencer.location;
                     existing.dateOfBirth = influencer.dateOfBirth;
                     existing.gender = influencer.gender;
@@ -119,6 +120,13 @@ namespace CampaignManagement.Repositories
                 
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<int> GetCreatorCodeUsagesAsync(int influencerId)
+        {
+            return await _context.mstCreatorCodes
+                .Where(c => c.influencerId == influencerId && c.isActive)
+                .SumAsync(c => c.totalUsages);
         }
     }
 }
