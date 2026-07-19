@@ -42,6 +42,26 @@ namespace CampaignManagement.Repositories
             {
                 influencer.created_at = DateTime.Now;
                 influencer.isActive = true;
+                
+                // Auto-generate Creator ID: CH{platform prefix}{next sequential number}
+                string platformPrefix = "YT"; // default to YouTube
+                if (!string.IsNullOrEmpty(influencer.socialMediaPlatforms))
+                {
+                    var platforms = influencer.socialMediaPlatforms.ToLower();
+                    if (platforms.Contains("instagram")) platformPrefix = "IG";
+                    else if (platforms.Contains("youtube")) platformPrefix = "YT";
+                    else if (platforms.Contains("twitter") || platforms.Contains("x")) platformPrefix = "TW";
+                    else if (platforms.Contains("facebook")) platformPrefix = "FB";
+                }
+                
+                int nextId = await _context.mstInfluencers.CountAsync() + 1;
+                influencer.creatorId = $"CH{platformPrefix}{nextId:D2}";
+                
+                if (influencer.dateOfOnboarding == null)
+                {
+                    influencer.dateOfOnboarding = DateTime.Now;
+                }
+                
                 _context.mstInfluencers.Add(influencer);
             }
             else
@@ -55,7 +75,6 @@ namespace CampaignManagement.Repositories
                     existing.dateOfBirth = influencer.dateOfBirth;
                     existing.gender = influencer.gender;
                     existing.socialMediaPlatforms = influencer.socialMediaPlatforms;
-                    existing.creatorId = influencer.creatorId;
                     existing.managerName = influencer.managerName;
                     existing.managerNumber = influencer.managerNumber;
                     existing.instagramProfile = influencer.instagramProfile;
@@ -72,6 +91,17 @@ namespace CampaignManagement.Repositories
                     existing.estCostMax = influencer.estCostMax;
                     existing.reliabilityScore = influencer.reliabilityScore;
                     existing.notes = influencer.notes;
+                    
+                    // Map new profile fields
+                    existing.phoneNumber = influencer.phoneNumber;
+                    existing.shortDescription = influencer.shortDescription;
+                    existing.languagesFamiliar = influencer.languagesFamiliar;
+                    existing.profilePicturePath = influencer.profilePicturePath;
+                    existing.instagramUrl = influencer.instagramUrl;
+                    existing.residentialAddress = influencer.residentialAddress;
+                    existing.dateOfOnboarding = influencer.dateOfOnboarding;
+                    existing.influencerInterests = influencer.influencerInterests;
+                    existing.paymentDetails = influencer.paymentDetails;
                 }
             }
             await _context.SaveChangesAsync();

@@ -2,6 +2,22 @@
 @{
     ViewData["Title"] = "Influencer Profile - " + Model.name;
     var campaigns = ViewBag.Campaigns as List<CampaignManagement.Models.Entity.mstCampaign> ?? new();
+    
+    // Compute dynamic stats from linked campaigns
+    int totalCampaignCount = campaigns.Count;
+    int totalReachVal = campaigns.Sum(c => c.totalReach > 0 ? c.totalReach : Math.Max(0, c.downloadsAfter - c.downloadsBefore));
+    string totalReachStr = totalReachVal >= 1000000 
+        ? $"{(totalReachVal / 1000000.0):0.0}M" 
+        : totalReachVal >= 1000 
+            ? $"{(totalReachVal / 1000.0):0.0}k" 
+            : totalReachVal == 0 ? "--" : totalReachVal.ToString();
+    decimal totalSpentVal = campaigns.Sum(c => c.totalSpend);
+    decimal avgCostPerCollab = totalCampaignCount > 0 ? totalSpentVal / totalCampaignCount : 0;
+    
+    // Parse categories from model
+    var categories = !string.IsNullOrEmpty(Model.category) 
+        ? Model.category.Split(',', StringSplitOptions.TrimEntries) 
+        : new[] { "General" };
 }
 
 <div class="d-flex align-items-center mb-4">
@@ -21,8 +37,10 @@
                 <div>
                     <h4 class="fw-bold mb-1">@Model.name <span class="text-warning fs-6"><i class="fa-solid fa-star"></i></span></h4>
                     <div class="d-flex gap-2 mt-1">
-                        <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1 fs-9">Food</span>
-                        <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1 fs-9">Travel</span>
+                        @foreach (var cat in categories)
+                        {
+                            <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1 fs-9">@cat</span>
+                        }
                     </div>
                 </div>
             </div>
@@ -84,31 +102,31 @@
                 <div class="col-6 col-md-3">
                     <div class="p-3 border rounded text-center bg-light">
                         <span class="text-muted fs-8 d-block mb-1">Total Campaigns</span>
-                        <h4 class="fw-bold text-dark mb-0">3</h4>
+                        <h4 class="fw-bold text-dark mb-0">@totalCampaignCount</h4>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="p-3 border rounded text-center bg-light">
                         <span class="text-muted fs-8 d-block mb-1">Total Reach</span>
-                        <h4 class="fw-bold text-primary mb-0">2.5k</h4>
+                        <h4 class="fw-bold text-primary mb-0">@totalReachStr</h4>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="p-3 border rounded text-center bg-light">
                         <span class="text-muted fs-8 d-block mb-1">Total Spend</span>
-                        <h5 class="fw-bold text-danger mb-0" style="font-size: 15px;">₹ 2,40,000</h5>
+                        <h5 class="fw-bold text-danger mb-0" style="font-size: 15px;">₹ @totalSpentVal.ToString("N0")</h5>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="p-3 border rounded text-center bg-light">
                         <span class="text-muted fs-8 d-block mb-1">Avg. Cost per Collab</span>
-                        <h5 class="fw-bold text-dark mb-0" style="font-size: 15px;">₹ 80,000</h5>
+                        <h5 class="fw-bold text-dark mb-0" style="font-size: 15px;">₹ @avgCostPerCollab.ToString("N0")</h5>
                     </div>
                 </div>
             </div>
 
             <!-- Reliability Score -->
-            <div class="d-flex align-items-center justify-content-between p-3 border rounded mb-4">
+            <div class="d-flex align-items-center justify-content-between p-3 border rounded mb-2">
                 <div>
                     <span class="text-muted fs-8 d-block">Reliability Score</span>
                     <span class="text-warning fs-5">
@@ -122,6 +140,32 @@
                     <i class="fa-solid fa-plus me-1"></i> Add note
                 </button>
             </div>
+            <div class="alert alert-light d-flex align-items-center gap-2 fs-8 mb-4 py-2">
+                <i class="fa-solid fa-circle-info text-info"></i>
+                <span>Reliability score is based on <strong>creator code usage / followers count</strong>. A higher ratio indicates greater audience trust.</span>
+            </div>
+
+            <!-- Total Reach Input Section -->
+            <h6 class="fw-bold mb-3 border-bottom pb-2">Update Total Reach</h6>
+            @if (campaigns.Any())
+            {
+                @foreach (var camp in campaigns.Where(c => c.status == "Active" || c.status == "Completed"))
+                {
+                    <form method="post" asp-action="UpdateTotalReach" class="d-flex align-items-center gap-2 mb-2">
+                        <input type="hidden" name="campaignId" value="@camp.mstCampaignId" />
+                        <input type="hidden" name="influencerId" value="@Model.mstInfluencerId" />
+                        <span class="fw-medium text-muted fs-8" style="min-width: 120px;">@camp.name:</span>
+                        <input type="number" class="form-control form-control-sm" name="totalReach" value="@camp.totalReach" style="max-width: 140px;" placeholder="0">
+                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Save
+                        </button>
+                    </form>
+                }
+            }
+            else
+            {
+                <div class="text-muted fs-8">No linked campaigns found to update reach.</div>
+            }
 
             <!-- Notes Section -->
             @if (!string.IsNullOrEmpty(Model.notes))

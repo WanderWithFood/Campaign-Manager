@@ -272,3 +272,31 @@ INSERT INTO `trnDeliverables` (`campaignId`, `influencerId`, `deliverable`, `com
 INSERT INTO `mstStakeholders` (`campaignId`, `name`, `role`, `company`, `mobile`, `email`, `location`) VALUES
 (4, 'Arjun Kumar', 'Poster Designer', 'Freelance', '+91 98420 56897', 'arjundesigner@gmail.com', 'Chennai'),
 (4, 'Venky', 'Travel Guide', 'SA Travels', '+91 98762 59862', 'venky@gmail.com', 'Chennai');
+
+-- ============================================================
+-- Schema Updates: mstCampaigns - new fields
+-- ============================================================
+ALTER TABLE `mstCampaigns`
+    ADD COLUMN IF NOT EXISTS `influencerId` INT NULL AFTER `socialMediaPlatforms`,
+    ADD COLUMN IF NOT EXISTS `basePay` DECIMAL(18, 2) NOT NULL DEFAULT 0.00 AFTER `influencerId`,
+    ADD COLUMN IF NOT EXISTS `incentiveAmount` DECIMAL(18, 2) NOT NULL DEFAULT 0.00 AFTER `basePay`,
+    ADD COLUMN IF NOT EXISTS `budgetThreshold` DECIMAL(18, 2) NOT NULL DEFAULT 0.00 AFTER `incentiveAmount`,
+    ADD COLUMN IF NOT EXISTS `allowance` DECIMAL(18, 2) NOT NULL DEFAULT 0.00 AFTER `budgetThreshold`,
+    ADD COLUMN IF NOT EXISTS `termsAndConditions` TEXT NULL AFTER `allowance`,
+    ADD COLUMN IF NOT EXISTS `influencerTag` VARCHAR(255) NULL AFTER `termsAndConditions`,
+    ADD COLUMN IF NOT EXISTS `endReason` TEXT NULL AFTER `influencerTag`,
+    ADD COLUMN IF NOT EXISTS `totalReach` INT NOT NULL DEFAULT 0 AFTER `endReason`;
+
+-- ============================================================
+-- Schema Updates: mstInfluencers - new fields
+-- ============================================================
+ALTER TABLE `mstInfluencers`
+    ADD COLUMN IF NOT EXISTS `phoneNumber` VARCHAR(20) NULL AFTER `notes`,
+    ADD COLUMN IF NOT EXISTS `shortDescription` TEXT NULL AFTER `phoneNumber`,
+    ADD COLUMN IF NOT EXISTS `languagesFamiliar` VARCHAR(500) NULL AFTER `shortDescription`,
+    ADD COLUMN IF NOT EXISTS `profilePicturePath` VARCHAR(500) NULL AFTER `languagesFamiliar`,
+    ADD COLUMN IF NOT EXISTS `instagramUrl` VARCHAR(500) NULL AFTER `profilePicturePath`,
+    ADD COLUMN IF NOT EXISTS `residentialAddress` TEXT NULL AFTER `instagramUrl`,
+    ADD COLUMN IF NOT EXISTS `dateOfOnboarding` DATETIME NULL AFTER `residentialAddress`,
+    ADD COLUMN IF NOT EXISTS `influencerInterests` VARCHAR(500) NULL AFTER `dateOfOnboarding`,
+    ADD COLUMN IF NOT EXISTS `paymentDetails` TEXT NULL AFTER `influencerInterests`;

@@ -106,7 +106,7 @@
 
 <!-- Add Influencer Modal -->
 <div class="modal fade" id="addInfluencerModal" tabindex="-1" aria-labelledby="addInfluencerModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content border-0 rounded-4 shadow">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title fw-bold" id="addInfluencerModalLabel">Add Influencer Profile</h5>
@@ -114,10 +114,16 @@
             </div>
             <form method="post" asp-action="SaveInfluencer">
                 <div class="modal-body p-4">
-                    <div class="row g-3">
+                    <!-- Basic Info Section -->
+                    <h6 class="fw-bold text-primary mb-3 border-bottom pb-2"><i class="fa-solid fa-user me-2"></i>Basic Information</h6>
+                    <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label for="inf_name" class="form-label fw-medium">Influencer Name</label>
+                            <label for="inf_name" class="form-label fw-medium">Influencer Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="inf_name" name="name" required placeholder="e.g. Irfan's View">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inf_phoneNumber" class="form-label fw-medium">Phone Number</label>
+                            <input type="tel" class="form-control" id="inf_phoneNumber" name="phoneNumber" placeholder="e.g. +91 98420 12345">
                         </div>
                         <div class="col-md-6">
                             <label for="inf_category" class="form-label fw-medium">Category</label>
@@ -127,14 +133,83 @@
                             <label for="inf_location" class="form-label fw-medium">Location</label>
                             <input type="text" class="form-control" id="inf_location" name="location" placeholder="e.g. Chennai">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <label for="inf_dateOfBirth" class="form-label fw-medium">Date of Birth</label>
+                            <input type="date" class="form-control" id="inf_dateOfBirth" name="dateOfBirth">
+                        </div>
+                        <div class="col-md-4">
                             <label for="inf_gender" class="form-label fw-medium">Gender</label>
                             <select class="form-select" id="inf_gender" name="gender">
+                                <option value="">Select Gender</option>
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                                 <option value="Other">Other</option>
                             </select>
                         </div>
+                        <div class="col-md-4">
+                            <label for="inf_dateOfOnboarding" class="form-label fw-medium">Date of Onboarding</label>
+                            <input type="date" class="form-control" id="inf_dateOfOnboarding" name="dateOfOnboarding">
+                        </div>
+                        <div class="col-12">
+                            <label for="inf_shortDescription" class="form-label fw-medium">Short Description</label>
+                            <textarea class="form-control" id="inf_shortDescription" name="shortDescription" rows="2" placeholder="e.g. Food exploration and travel content creator based in Chennai"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inf_languagesFamiliar" class="form-label fw-medium">Languages Familiar</label>
+                            <input type="text" class="form-control" id="inf_languagesFamiliar" name="languagesFamiliar" placeholder="e.g. Tamil, English, Hindi">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inf_influencerInterests" class="form-label fw-medium">Influencer Interests</label>
+                            <input type="text" class="form-control" id="inf_influencerInterests" name="influencerInterests" placeholder="e.g. Street Food, Vlogging, Hotels">
+                        </div>
+                        <div class="col-12">
+                            <label for="inf_residentialAddress" class="form-label fw-medium">Residential Address</label>
+                            <textarea class="form-control" id="inf_residentialAddress" name="residentialAddress" rows="2" placeholder="Full residential address"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inf_profilePicturePath" class="form-label fw-medium">Profile Picture URL/Path</label>
+                            <input type="text" class="form-control" id="inf_profilePicturePath" name="profilePicturePath" placeholder="e.g. /uploads/irfan.jpg">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inf_instagramUrl" class="form-label fw-medium">Instagram URL</label>
+                            <input type="url" class="form-control" id="inf_instagramUrl" name="instagramUrl" placeholder="e.g. https://instagram.com/irfansview">
+                        </div>
+                    </div>
+                    
+                    <!-- Creator ID Auto-Generated Notice -->
+                    <div class="alert alert-info d-flex align-items-center gap-2 mb-4 fs-8">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <span><strong>Creator ID</strong> will be auto-generated based on the social media platform (e.g. CHYT03, CHIG04).</span>
+                    </div>
+
+                    <!-- Social & Manager Info -->
+                    <h6 class="fw-bold text-primary mb-3 border-bottom pb-2"><i class="fa-solid fa-share-nodes me-2"></i>Social & Manager Info</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="inf_socialMediaPlatforms" class="form-label fw-medium">Social Media Platforms</label>
+                            <input type="text" class="form-control" id="inf_socialMediaPlatforms" name="socialMediaPlatforms" placeholder="e.g. YouTube, Instagram">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inf_instagramProfile" class="form-label fw-medium">Instagram Handle</label>
+                            <input type="text" class="form-control" id="inf_instagramProfile" name="instagramProfile" placeholder="e.g. @@irfansview">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inf_managerName" class="form-label fw-medium">Manager Name</label>
+                            <input type="text" class="form-control" id="inf_managerName" name="managerName" placeholder="e.g. Sohail">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inf_managerNumber" class="form-label fw-medium">Manager Mobile</label>
+                            <input type="text" class="form-control" id="inf_managerNumber" name="managerNumber" placeholder="9842158724">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inf_whatsAppContact" class="form-label fw-medium">WhatsApp Contact</label>
+                            <input type="text" class="form-control" id="inf_whatsAppContact" name="whatsAppContact" placeholder="9842158724">
+                        </div>
+                    </div>
+
+                    <!-- Stats Section -->
+                    <h6 class="fw-bold text-primary mb-3 border-bottom pb-2"><i class="fa-solid fa-chart-bar me-2"></i>Performance Stats</h6>
+                    <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label for="inf_followers" class="form-label fw-medium">Followers Count</label>
                             <input type="text" class="form-control" id="inf_followers" name="followers" placeholder="e.g. 245K">
@@ -163,17 +238,14 @@
                             <label for="inf_reliabilityScore" class="form-label fw-medium">Reliability Rating (1-5)</label>
                             <input type="number" min="1" max="5" class="form-control" id="inf_reliabilityScore" name="reliabilityScore" placeholder="4">
                         </div>
-                        <div class="col-md-6">
-                            <label for="inf_creatorId" class="form-label fw-medium">Creator ID</label>
-                            <input type="text" class="form-control" id="inf_creatorId" name="creatorId" placeholder="e.g. CHYT01">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="inf_managerName" class="form-label fw-medium">Manager Name</label>
-                            <input type="text" class="form-control" id="inf_managerName" name="managerName" placeholder="e.g. Sohail">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="inf_managerNumber" class="form-label fw-medium">Manager Mobile</label>
-                            <input type="text" class="form-control" id="inf_managerNumber" name="managerNumber" placeholder="9842158724">
+                    </div>
+                    
+                    <!-- Payment Info -->
+                    <h6 class="fw-bold text-primary mb-3 border-bottom pb-2"><i class="fa-solid fa-credit-card me-2"></i>Payment Information</h6>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="inf_paymentDetails" class="form-label fw-medium">Payment Details</label>
+                            <textarea class="form-control" id="inf_paymentDetails" name="paymentDetails" rows="2" placeholder="e.g. UPI: irfan@paytm | Bank: HDFC A/C No: XXXX1234"></textarea>
                         </div>
                     </div>
                 </div>

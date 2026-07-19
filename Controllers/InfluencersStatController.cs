@@ -72,7 +72,11 @@ namespace CampaignManagement.Controllers
                 }
 
                 var allCampaigns = await _campaignsRepository.GetCampaignsAsync();
-                ViewBag.Campaigns = allCampaigns ?? new List<mstCampaign>();
+                // Filter to only show campaigns linked to this influencer
+                var linkedCampaigns = allCampaigns?
+                    .Where(c => c.influencerId == id || c.creatorName == influencer.name)
+                    .ToList() ?? new List<mstCampaign>();
+                ViewBag.Campaigns = linkedCampaigns;
 
                 return View(influencer);
             }
@@ -114,6 +118,30 @@ namespace CampaignManagement.Controllers
                 Console.WriteLine($"Error in InfluencersStatController.AddNote: {ex.Message}");
                 ViewBag.Error = "Failed to add note. Please try again.";
                 return RedirectToAction("Profile", new { id });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateTotalReach(int campaignId, int totalReach, int influencerId)
+        {
+            try
+            {
+                var (userId, accessLevel) = GetUserContext();
+                if (!userId.HasValue)
+                {
+                    return RedirectToAction("Login", "Auth");
+                }
+
+                if (campaignId > 0)
+                {
+                    await _campaignsRepository.UpdateTotalReachAsync(campaignId, totalReach);
+                }
+                return RedirectToAction("Profile", new { id = influencerId });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in InfluencersStatController.UpdateTotalReach: {ex.Message}");
+                return RedirectToAction("Profile", new { id = influencerId });
             }
         }
 

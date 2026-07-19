@@ -6,5 +6,6 @@ namespace CampaignManagement.Interfaces
     public interface IDashboardRepository
     {
         Task<DashboardStatsDTO> GetDashboardStatsAsync();
+        Task<DashboardStatsDTO> GetDashboardStatsAsync(DateTime? fromDate, DateTime? toDate);
     }
 }

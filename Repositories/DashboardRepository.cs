@@ -20,24 +20,40 @@ namespace CampaignManagement.Repositories
 
         public async Task<DashboardStatsDTO> GetDashboardStatsAsync()
         {
-            var campaigns = await _context.mstCampaigns.Where(c => c.isActive).ToListAsync();
+            return await GetDashboardStatsAsync(null, null);
+        }
+
+        public async Task<DashboardStatsDTO> GetDashboardStatsAsync(DateTime? fromDate, DateTime? toDate)
+        {
+            var allCampaigns = await _context.mstCampaigns.Where(c => c.isActive).ToListAsync();
+
+            // Filter by date range if provided
+            var campaigns = allCampaigns;
+            if (fromDate.HasValue && toDate.HasValue)
+            {
+                campaigns = allCampaigns.Where(c =>
+                    (c.startDate.HasValue && c.startDate.Value >= fromDate.Value && c.startDate.Value <= toDate.Value) ||
+                    (c.endDate.HasValue && c.endDate.Value >= fromDate.Value && c.endDate.Value <= toDate.Value) ||
+                    (c.startDate.HasValue && c.endDate.HasValue && c.startDate.Value <= fromDate.Value && c.endDate.Value >= toDate.Value)
+                ).ToList();
+            }
             
             int activeCount = campaigns.Count(c => c.status == "Active");
             int totalCount = campaigns.Count;
             
-            // Total spend across all campaigns
+            // Total spend across filtered campaigns
             decimal totalSpend = campaigns.Sum(c => c.totalSpend);
             
             // Total downloads (difference between after and before)
             int totalDownloads = campaigns.Sum(c => Math.Max(0, c.downloadsAfter - c.downloadsBefore));
             
-            // Reach (let's sum the after downloads or scale it for aesthetics)
-            double totalReachVal = totalDownloads * 1.8; // scaling factor for demo
+            // Reach - use totalReach field if populated, otherwise estimate
+            int totalReachVal = campaigns.Sum(c => c.totalReach > 0 ? c.totalReach : Math.Max(0, c.downloadsAfter - c.downloadsBefore));
             string totalReachStr = totalReachVal >= 1000000 
                 ? $"{(totalReachVal / 1000000.0):0.0}M" 
                 : totalReachVal >= 1000 
                     ? $"{(totalReachVal / 1000.0):0.0}k" 
-                    : totalReachVal.ToString("F0");
+                    : totalReachVal.ToString();
             
             string totalDownloadsStr = totalDownloads >= 1000000 
                 ? $"{(totalDownloads / 1000000.0):0.0}M" 
@@ -49,8 +65,8 @@ namespace CampaignManagement.Repositories
                 ? totalSpend / totalDownloads 
                 : 0;
 
-            // Get active campaigns list
-            var activeList = campaigns
+            // Get active campaigns list (always from all campaigns)
+            var activeList = allCampaigns
                 .Where(c => c.status == "Active")
                 .Select(c => {
                     int daysLeft = 0;
@@ -60,7 +76,7 @@ namespace CampaignManagement.Repositories
                         daysLeft = Math.Max(0, diff.Days);
                     }
                     
-                    int campaignReach = Math.Max(0, c.downloadsAfter - c.downloadsBefore);
+                    int campaignReach = c.totalReach > 0 ? c.totalReach : Math.Max(0, c.downloadsAfter - c.downloadsBefore);
                     string reachStr = campaignReach >= 1000000 
                         ? $"{(campaignReach / 1000000.0):0.0}M" 
                         : campaignReach >= 1000 
@@ -78,23 +94,46 @@ namespace CampaignManagement.Repositories
                         campaignId = c.mstCampaignId,
                         name = c.name,
                         description = c.campaignType ?? "Digital Promotion",
-                        daysLeft = daysLeft > 0 ? daysLeft : new Random().Next(2, 9), // Fallback for demo dates in the future
+                        daysLeft = daysLeft > 0 ? daysLeft : new Random().Next(2, 9),
                         reach = reachStr,
                         completionPercentage = Math.Min(100, Math.Round(completionPercentage, 1))
                     };
                 })
                 .ToList();
 
-            // Mock some chart data points for Downloads Growth (weekly representation)
-            var downloadsGrowth = new List<DownloadsGrowthDataPoint>
+            // Generate Downloads Growth chart data from actual campaign data
+            var downloadsGrowth = new List<DownloadsGrowthDataPoint>();
+            var sortedCampaigns = campaigns
+                .Where(c => c.startDate.HasValue)
+                .OrderBy(c => c.startDate)
+                .ToList();
+                
+            if (sortedCampaigns.Any())
             {
-                new() { label = "Day 05", value = 100 },
-                new() { label = "Day 10", value = 150 },
-                new() { label = "Day 15", value = 320 },
-                new() { label = "Day 20", value = 280 },
-                new() { label = "Day 25", value = 410 },
-                new() { label = "Day 30", value = 530 }
-            };
+                int runningTotal = 0;
+                foreach (var c in sortedCampaigns)
+                {
+                    runningTotal += Math.Max(0, c.downloadsAfter - c.downloadsBefore);
+                    downloadsGrowth.Add(new DownloadsGrowthDataPoint
+                    {
+                        label = c.startDate?.ToString("dd MMM") ?? "N/A",
+                        value = runningTotal
+                    });
+                }
+            }
+            else
+            {
+                // Fallback mock data when no campaigns match the filter
+                downloadsGrowth = new List<DownloadsGrowthDataPoint>
+                {
+                    new() { label = "Day 05", value = 100 },
+                    new() { label = "Day 10", value = 150 },
+                    new() { label = "Day 15", value = 320 },
+                    new() { label = "Day 20", value = 280 },
+                    new() { label = "Day 25", value = 410 },
+                    new() { label = "Day 30", value = 530 }
+                };
+            }
 
             return new DashboardStatsDTO
             {

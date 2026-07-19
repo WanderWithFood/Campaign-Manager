@@ -8,13 +8,16 @@ namespace CampaignManagement.Controllers
     public class CampaignsController : BaseController
     {
         private readonly ICampaignsRepository _repository;
+        private readonly IInfluencersStatRepository _influencersRepository;
         private readonly IPermissionHelper _permissionHelper;
 
         public CampaignsController(
             ICampaignsRepository repository,
+            IInfluencersStatRepository influencersRepository,
             IPermissionHelper permissionHelper)
         {
             _repository = repository;
+            _influencersRepository = influencersRepository;
             _permissionHelper = permissionHelper;
         }
 
@@ -33,6 +36,11 @@ namespace CampaignManagement.Controllers
                 await SetPagePermissionsAsync(_permissionHelper, "Campaigns", "Index");
 
                 ViewBag.ActiveStatus = status;
+                
+                // Load influencers for the Create Campaign dropdown
+                var influencers = await _influencersRepository.GetInfluencersAsync();
+                ViewBag.Influencers = influencers ?? new List<mstInfluencer>();
+                
                 var campaigns = await _repository.GetAllCampaignsAsync();
                 return View(campaigns ?? new List<mstCampaign>());
             }
@@ -40,6 +48,7 @@ namespace CampaignManagement.Controllers
             {
                 Console.WriteLine($"Error in CampaignsController.Index: {ex.Message}");
                 ViewBag.Error = "Failed to load campaigns. Please try again.";
+                ViewBag.Influencers = new List<mstInfluencer>();
                 return View(new List<mstCampaign>());
             }
         }
@@ -74,6 +83,18 @@ namespace CampaignManagement.Controllers
                 ViewBag.Expenses = await _repository.GetExpensesByCampaignIdAsync(id) ?? new List<trnExpense>();
                 ViewBag.Deliverables = await _repository.GetDeliverablesByCampaignIdAsync(id) ?? new List<trnDeliverable>();
                 ViewBag.Stakeholders = await _repository.GetStakeholdersByCampaignIdAsync(id) ?? new List<mstStakeholder>();
+                
+                // Load linked influencer for Partners tab and View Profile button
+                mstInfluencer? linkedInfluencer = null;
+                if (campaign.influencerId.HasValue && campaign.influencerId.Value > 0)
+                {
+                    linkedInfluencer = await _influencersRepository.GetInfluencerByIdAsync(campaign.influencerId.Value);
+                }
+                ViewBag.Influencer = linkedInfluencer;
+                
+                // Load all influencers for the edit form dropdown
+                var influencers = await _influencersRepository.GetInfluencersAsync();
+                ViewBag.Influencers = influencers ?? new List<mstInfluencer>();
 
                 return View(campaign);
             }
@@ -149,7 +170,7 @@ namespace CampaignManagement.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> EndCampaign(int id)
+        public async Task<IActionResult> EndCampaign(int id, string? reason)
         {
             try
             {
@@ -158,13 +179,13 @@ namespace CampaignManagement.Controllers
                     return BadRequest("Invalid campaign ID");
                 }
 
-                var result = await _repository.EndCampaignAsync(id);
+                var result = await _repository.EndCampaignAsync(id, reason);
                 if (!result)
                 {
                     ViewBag.Error = "Failed to end campaign";
                     return RedirectToAction("Details", new { id });
                 }
-                return RedirectToAction("Details", new { id });
+                return RedirectToAction("Index", new { status = "Completed" });
             }
             catch (Exception ex)
             {
@@ -290,6 +311,28 @@ namespace CampaignManagement.Controllers
                 Console.WriteLine($"Error in CampaignsController.DeleteStakeholder: {ex.Message}");
                 ViewBag.Error = "Failed to delete stakeholder. Please try again.";
                 return RedirectToAction("Index");
+            }
+        }
+        #endregion
+        
+        #region Total Reach
+        [HttpPost]
+        public async Task<IActionResult> UpdateTotalReach(int campaignId, int totalReach)
+        {
+            try
+            {
+                if (campaignId <= 0)
+                {
+                    return BadRequest("Invalid campaign ID");
+                }
+
+                var result = await _repository.UpdateTotalReachAsync(campaignId, totalReach);
+                return RedirectToAction("Details", new { id = campaignId });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in CampaignsController.UpdateTotalReach: {ex.Message}");
+                return RedirectToAction("Details", new { id = campaignId });
             }
         }
         #endregion

@@ -73,13 +73,24 @@ namespace CampaignManagement.Repositories
             existing.budget = campaign.budget;
             existing.creatorName = campaign.creatorName;
             existing.socialMediaPlatforms = campaign.socialMediaPlatforms;
+            
+            // New fields
+            existing.influencerId = campaign.influencerId;
+            existing.basePay = campaign.basePay;
+            existing.incentiveAmount = campaign.incentiveAmount;
+            existing.budgetThreshold = campaign.budgetThreshold;
+            existing.allowance = campaign.allowance;
+            existing.termsAndConditions = campaign.termsAndConditions;
+            existing.influencerTag = campaign.influencerTag;
+            existing.totalReach = campaign.totalReach;
+            
             existing.updated_at = DateTime.Now;
 
             await _context.SaveChangesAsync();
             return true;
         }
 
-        public async Task<bool> EndCampaignAsync(int campaignId)
+        public async Task<bool> EndCampaignAsync(int campaignId, string? reason = null)
         {
             var existing = await _context.mstCampaigns
                 .FirstOrDefaultAsync(c => c.mstCampaignId == campaignId);
@@ -90,6 +101,23 @@ namespace CampaignManagement.Repositories
             }
 
             existing.status = "Completed";
+            existing.endReason = reason;
+            existing.updated_at = DateTime.Now;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        
+        public async Task<bool> UpdateTotalReachAsync(int campaignId, int totalReach)
+        {
+            var existing = await _context.mstCampaigns
+                .FirstOrDefaultAsync(c => c.mstCampaignId == campaignId);
+
+            if (existing == null)
+            {
+                return false;
+            }
+
+            existing.totalReach = totalReach;
             existing.updated_at = DateTime.Now;
             await _context.SaveChangesAsync();
             return true;

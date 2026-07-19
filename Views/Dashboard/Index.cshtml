@@ -1,6 +1,10 @@
 @model CampaignManagement.Models.DTOs.DashboardStatsDTO
 @{
     ViewData["Title"] = "Dashboard";
+    int selectedDays = ViewBag.Days ?? 30;
+    string fromDate = ViewBag.FromDate ?? "";
+    string toDate = ViewBag.ToDate ?? "";
+    string dropdownLabel = selectedDays == 7 ? "Last 7 Days" : selectedDays == 30 ? "Last 30 Days" : "Custom Range";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -9,9 +13,24 @@
         <p class="text-muted mb-0">Here's what's happening with your collaborations</p>
     </div>
     <div class="dropdown">
-        <button class="btn btn-outline-secondary dropdown-toggle bg-white" type="button">
-            Last 30 Days
+        <button class="btn btn-outline-secondary dropdown-toggle bg-white" type="button" id="dateRangeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            @dropdownLabel
         </button>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dateRangeDropdown">
+            <li><a class="dropdown-item @(selectedDays == 7 ? "active" : "")" href="@Url.Action("Index", new { days = 7 })">Last 7 Days</a></li>
+            <li><a class="dropdown-item @(selectedDays == 30 ? "active" : "")" href="@Url.Action("Index", new { days = 30 })">Last 30 Days</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <div class="px-3 py-2">
+                    <label class="form-label fw-medium fs-8 mb-1">Custom Range</label>
+                    <form method="get" asp-action="Index" class="d-flex flex-column gap-2">
+                        <input type="date" name="fromDate" class="form-control form-control-sm" value="@fromDate" required>
+                        <input type="date" name="toDate" class="form-control form-control-sm" value="@toDate" required>
+                        <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+                    </form>
+                </div>
+            </li>
+        </ul>
     </div>
 </div>
 
@@ -99,7 +118,10 @@
     <div class="col-lg-6 mb-4">
         <div class="custom-card h-100">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="fw-bold mb-0">Downloads Growth</h5>
+                <div>
+                    <h5 class="fw-bold mb-0">Downloads Growth</h5>
+                    <span class="text-muted fs-8">Linked to Creator Codes usage data</span>
+                </div>
                 <select class="form-select form-select-sm bg-white" style="width: 120px;">
                     <option>Weekly</option>
                     <option>Monthly</option>

@@ -41,6 +41,17 @@ namespace CampaignManagement.Models.Entity
         public int reliabilityScore { get; set; } = 0;
         public string? notes { get; set; }
         
+        // Additional profile fields
+        public string? phoneNumber { get; set; }
+        public string? shortDescription { get; set; }
+        public string? languagesFamiliar { get; set; }
+        public string? profilePicturePath { get; set; }
+        public string? instagramUrl { get; set; }
+        public string? residentialAddress { get; set; }
+        public DateTime? dateOfOnboarding { get; set; }
+        public string? influencerInterests { get; set; }
+        public string? paymentDetails { get; set; }
+        
         public bool isActive { get; set; } = true;
         
         public DateTime? created_at { get; set; } = DateTime.Now;

@@ -9,7 +9,7 @@ namespace CampaignManagement.Interfaces
         Task<mstCampaign?> GetCampaignByIdAsync(int campaignId);
         Task<int> CreateCampaignAsync(mstCampaign campaign);
         Task<bool> UpdateCampaignAsync(mstCampaign campaign);
-        Task<bool> EndCampaignAsync(int campaignId);
+        Task<bool> EndCampaignAsync(int campaignId, string? reason = null);
 
         Task<List<trnExpense>> GetExpensesByCampaignIdAsync(int campaignId);
         Task<int> AddExpenseAsync(trnExpense expense);
@@ -20,5 +20,7 @@ namespace CampaignManagement.Interfaces
         Task<List<mstStakeholder>> GetStakeholdersByCampaignIdAsync(int campaignId);
         Task<int> AddStakeholderAsync(mstStakeholder stakeholder);
         Task<bool> DeleteStakeholderAsync(int stakeholderId);
+        
+        Task<bool> UpdateTotalReachAsync(int campaignId, int totalReach);
     }
 }
