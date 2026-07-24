@@ -1,134 +1,196 @@
 @model CampaignManagement.Models.DTOs.DashboardStatsDTO
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Core Admin Dashboard";
     int selectedDays = ViewBag.Days ?? 30;
     string fromDate = ViewBag.FromDate ?? "";
     string toDate = ViewBag.ToDate ?? "";
-    string dropdownLabel = selectedDays == 7 ? "Last 7 Days" : selectedDays == 30 ? "Last 30 Days" : "Custom Range";
+    string dropdownLabel = selectedDays == 7 
+        ? "Last 7 Days" 
+        : selectedDays == 30 
+            ? "Last 30 Days" 
+            : (!string.IsNullOrEmpty(fromDate) && !string.IsNullOrEmpty(toDate) ? $"{fromDate} - {toDate}" : "Custom Range");
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="page-title mb-1">Welcome back !</h1>
-        <p class="text-muted mb-0">Here's what's happening with your collaborations</p>
+        <h1 class="page-title mb-1">Core Admin Dashboard</h1>
+        <p class="text-muted mb-0">Overview of portal insights, active campaigns, and Wander With Food creator codes analytics</p>
     </div>
-    <div class="dropdown">
-        <button class="btn btn-outline-secondary dropdown-toggle bg-white" type="button" id="dateRangeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            @dropdownLabel
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dateRangeDropdown">
-            <li><a class="dropdown-item @(selectedDays == 7 ? "active" : "")" href="@Url.Action("Index", new { days = 7 })">Last 7 Days</a></li>
-            <li><a class="dropdown-item @(selectedDays == 30 ? "active" : "")" href="@Url.Action("Index", new { days = 30 })">Last 30 Days</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-                <div class="px-3 py-2">
-                    <label class="form-label fw-medium fs-8 mb-1">Custom Range</label>
-                    <form method="get" asp-action="Index" class="d-flex flex-column gap-2">
-                        <input type="date" name="fromDate" class="form-control form-control-sm" value="@fromDate" required>
-                        <input type="date" name="toDate" class="form-control form-control-sm" value="@toDate" required>
-                        <button type="submit" class="btn btn-primary btn-sm">Apply</button>
-                    </form>
-                </div>
-            </li>
-        </ul>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-light text-secondary border px-3 py-2 fs-7 fw-normal d-none d-md-inline-block">
+            <i class="fa-solid fa-calendar-days text-primary me-1"></i> Timeframe: <strong>@dropdownLabel</strong>
+        </span>
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle bg-white px-3 py-2 shadow-sm" type="button" id="dateRangeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fa-solid fa-filter me-1 text-primary"></i> @dropdownLabel
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-2" aria-labelledby="dateRangeDropdown" style="min-width: 240px;">
+                <li><a class="dropdown-item rounded-2 py-2 @(selectedDays == 7 ? "active fw-bold" : "")" href="@Url.Action("Index", new { days = 7 })"><i class="fa-regular fa-clock me-2"></i>Last 7 Days</a></li>
+                <li><a class="dropdown-item rounded-2 py-2 @(selectedDays == 30 ? "active fw-bold" : "")" href="@Url.Action("Index", new { days = 30 })"><i class="fa-regular fa-calendar-check me-2"></i>Last 30 Days</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <div class="px-2 py-1">
+                        <label class="form-label fw-bold fs-8 mb-2 text-uppercase text-muted">Custom Date Range</label>
+                        <form method="get" asp-action="Index" class="d-flex flex-column gap-2">
+                            <div>
+                                <label class="form-label fs-8 text-muted mb-1">From Date</label>
+                                <input type="date" name="fromDate" class="form-control form-control-sm" value="@fromDate" required>
+                            </div>
+                            <div>
+                                <label class="form-label fs-8 text-muted mb-1">To Date</label>
+                                <input type="date" name="toDate" class="form-control form-control-sm" value="@toDate" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm mt-1 w-100 fw-medium">Apply Range</button>
+                        </form>
+                    </div>
+                </li>
+            </ul>
+        </div>
     </div>
 </div>
 
-<!-- KPI Cards -->
-<div class="kpi-grid">
-    <div class="kpi-card">
+<!-- Static View Only Insight Cards -->
+<div class="kpi-grid mb-4">
+    <!-- Active Campaigns Card (Static View Only) -->
+    <div class="kpi-card border-0 shadow-sm" style="cursor: default;">
         <div class="kpi-header">
-            <span>Active Campaigns</span>
-            <i class="fa-solid fa-play text-success kpi-icon bg-light"></i>
+            <span class="fw-bold">Active Campaigns</span>
+            <i class="fa-solid fa-play text-success kpi-icon bg-success-subtle"></i>
         </div>
-        <div class="kpi-value">@Model.activeCampaigns</div>
-        <div class="kpi-subtext text-success"><i class="fa-solid fa-arrow-up"></i> Ongoing tracking</div>
+        <div class="kpi-value my-2">@Model.activeCampaigns</div>
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="kpi-subtext text-success fw-medium"><i class="fa-solid fa-circle-dot fs-9 me-1"></i> Running now</span>
+            <span class="badge bg-light text-muted border fs-9">Campaigns Page</span>
+        </div>
     </div>
-    <div class="kpi-card">
+
+    <!-- Total Campaigns Card (Static View Only) -->
+    <div class="kpi-card border-0 shadow-sm" style="cursor: default;">
         <div class="kpi-header">
-            <span>Total Campaigns</span>
-            <i class="fa-solid fa-folder-open text-primary kpi-icon bg-light"></i>
+            <span class="fw-bold">Total Campaigns</span>
+            <i class="fa-solid fa-folder-open text-primary kpi-icon bg-primary-subtle"></i>
         </div>
-        <div class="kpi-value">@Model.totalCampaigns</div>
-        <div class="kpi-subtext">All time campaigns</div>
+        <div class="kpi-value my-2">@Model.totalCampaigns</div>
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="kpi-subtext text-muted">@Model.dateRangeLabel window</span>
+            <span class="badge bg-light text-muted border fs-9">Campaigns Page</span>
+        </div>
     </div>
-    <div class="kpi-card">
+
+    <!-- Total Reach Card (Static View Only) -->
+    <div class="kpi-card border-0 shadow-sm" style="cursor: default;">
         <div class="kpi-header">
-            <span>Total Reach</span>
-            <i class="fa-solid fa-eye text-warning kpi-icon bg-light"></i>
+            <span class="fw-bold">Total Reach</span>
+            <i class="fa-solid fa-eye text-warning kpi-icon bg-warning-subtle"></i>
         </div>
-        <div class="kpi-value">@Model.totalReach</div>
-        <div class="kpi-subtext text-success"><i class="fa-solid fa-arrow-up"></i> 12.5% vs last month</div>
+        <div class="kpi-value my-2">@Model.totalReach</div>
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="kpi-subtext text-success fw-medium"><i class="fa-solid fa-arrow-up me-1"></i> @Model.reachSubtext</span>
+            <span class="badge bg-light text-muted border fs-9">Reports Page</span>
+        </div>
     </div>
-    <div class="kpi-card">
+
+    <!-- Total Spend Card (Static View Only) -->
+    <div class="kpi-card border-0 shadow-sm" style="cursor: default;">
         <div class="kpi-header">
-            <span>Total Spend</span>
-            <i class="fa-solid fa-indian-rupee-sign text-danger kpi-icon bg-light"></i>
+            <span class="fw-bold">Total Spend</span>
+            <i class="fa-solid fa-indian-rupee-sign text-danger kpi-icon bg-danger-subtle"></i>
         </div>
-        <div class="kpi-value">₹ @Model.totalSpend.ToString("N0")</div>
-        <div class="kpi-subtext">Budget utilized</div>
+        <div class="kpi-value my-2">₹ @Model.totalSpend.ToString("N0")</div>
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="kpi-subtext text-muted">Budget utilized</span>
+            <span class="badge bg-light text-muted border fs-9">Expenses Page</span>
+        </div>
     </div>
-    <div class="kpi-card">
+
+    <!-- Total Downloads Card (Static View Only - Linked metric from Creator Codes) -->
+    <div class="kpi-card border-0 shadow-sm" style="cursor: default;">
         <div class="kpi-header">
-            <span>Total Downloads</span>
-            <i class="fa-solid fa-download text-info kpi-icon bg-light"></i>
+            <span class="fw-bold">Total Downloads</span>
+            <i class="fa-solid fa-download text-info kpi-icon bg-info-subtle"></i>
         </div>
-        <div class="kpi-value">@Model.totalDownloads</div>
-        <div class="kpi-subtext text-success"><i class="fa-solid fa-arrow-up"></i> 8.3% vs last 30 days</div>
+        <div class="kpi-value my-2 text-info">@Model.totalDownloads</div>
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="kpi-subtext text-info fw-medium"><i class="fa-solid fa-qrcode me-1"></i> Wander With Food</span>
+            <span class="badge bg-info-subtle text-info border border-info-subtle fs-9">Creator Codes</span>
+        </div>
     </div>
-    <div class="kpi-card">
+
+    <!-- Avg Cost per Download Card (Static View Only) -->
+    <div class="kpi-card border-0 shadow-sm" style="cursor: default;">
         <div class="kpi-header">
-            <span>Avg. Cost per Download</span>
-            <i class="fa-solid fa-chart-pie text-secondary kpi-icon bg-light"></i>
+            <span class="fw-bold">Avg. Cost / Download</span>
+            <i class="fa-solid fa-chart-pie text-secondary kpi-icon bg-secondary-subtle"></i>
         </div>
-        <div class="kpi-value">₹ @Model.avgCostPerDownload.ToString("N0")</div>
-        <div class="kpi-subtext">Efficiency metric</div>
+        <div class="kpi-value my-2">₹ @Model.avgCostPerDownload.ToString("N2")</div>
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="kpi-subtext text-muted">Efficiency metric</span>
+            <span class="badge bg-light text-muted border fs-9">Analytics</span>
+        </div>
     </div>
 </div>
 
 <div class="row">
     <!-- Active Campaigns List Panel -->
     <div class="col-lg-6 mb-4">
-        <div class="custom-card h-100">
-            <h5 class="fw-bold mb-4">Active Campaigns</h5>
+        <div class="custom-card h-100 border-0 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0">Active Campaigns</h5>
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill fs-8">
+                    @Model.activeCampaignsList.Count Active
+                </span>
+            </div>
             
             <div class="active-campaigns-list">
-                @foreach (var camp in Model.activeCampaignsList)
+                @if (Model.activeCampaignsList == null || !Model.activeCampaignsList.Any())
                 {
-                    <div class="active-campaign-item d-flex align-items-center justify-content-between p-3 mb-3 border rounded-3 bg-light">
-                        <div>
-                            <h6 class="fw-bold mb-1">@camp.name</h6>
-                            <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill px-2 py-1 fs-7">@camp.description</span>
-                            <div class="text-muted fs-7 mt-2"><i class="fa-regular fa-clock"></i> @camp.daysLeft days left</div>
-                        </div>
-                        <div class="text-end">
-                            <span class="text-primary fw-bold d-block mb-1">@camp.reach Reach</span>
-                            <div class="progress" style="width: 100px; height: 6px;">
-                                <div class="progress-bar" role="progressbar" style="width: @(camp.completionPercentage)%;" aria-valuenow="@camp.completionPercentage" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <span class="text-muted fs-8">@camp.completionPercentage% Budget</span>
-                        </div>
+                    <div class="text-center text-muted py-5">
+                        <i class="fa-solid fa-folder-open fs-2 mb-2 text-secondary"></i>
+                        <p class="mb-0">No active campaigns in this date range.</p>
                     </div>
+                }
+                else
+                {
+                    @foreach (var camp in Model.activeCampaignsList)
+                    {
+                        <div class="active-campaign-item d-flex align-items-center justify-content-between p-3 mb-3 border rounded-3 bg-light">
+                            <div>
+                                <h6 class="fw-bold mb-1">@camp.name</h6>
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill px-2 py-1 fs-7">@camp.description</span>
+                                <div class="text-muted fs-7 mt-2"><i class="fa-regular fa-clock me-1"></i> @camp.daysLeft days left</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="text-primary fw-bold d-block mb-1">@camp.reach Reach</span>
+                                <div class="progress" style="width: 100px; height: 6px;">
+                                    <div class="progress-bar bg-primary" role="progressbar" style="width: @(camp.completionPercentage)%;" aria-valuenow="@camp.completionPercentage" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <span class="text-muted fs-8">@camp.completionPercentage% Budget</span>
+                            </div>
+                        </div>
+                    }
                 }
             </div>
         </div>
     </div>
 
-    <!-- Downloads Growth Line Chart Panel -->
+    <!-- Downloads Growth Line Chart Panel - Linked to Wander With Food Backend (Creator Codes Page) -->
     <div class="col-lg-6 mb-4">
-        <div class="custom-card h-100">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="custom-card h-100 border-0 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                    <h5 class="fw-bold mb-0"><a href="@Url.Action("Index", "CreatorCodes")" class="text-dark text-decoration-none hover-link">Downloads Growth <i class="fa-solid fa-arrow-up-right-from-square fs-8 ms-1 text-primary"></i></a></h5>
-                    <span class="text-muted fs-8">Linked to Creator Codes usage data</span>
+                    <h5 class="fw-bold mb-0">
+                        <a href="@Url.Action("Index", "CreatorCodes")" class="text-dark text-decoration-none hover-link" title="Open Creator Codes Page">
+                            Downloads Growth <i class="fa-solid fa-arrow-up-right-from-square fs-8 ms-1 text-primary"></i>
+                        </a>
+                    </h5>
+                    <span class="text-muted fs-8">Linked to Wander With Food backend - <strong class="text-primary">Creator Codes</strong> page</span>
                 </div>
-                <select class="form-select form-select-sm bg-white" style="width: 120px;">
-                    <option>Weekly</option>
-                    <option>Monthly</option>
-                </select>
+                <a href="@Url.Action("Index", "CreatorCodes")" class="btn btn-outline-primary btn-sm rounded-pill px-3 fs-8">
+                    <i class="fa-solid fa-qrcode me-1"></i> Creator Codes
+                </a>
             </div>
             
-            <div class="chart-container" style="position: relative; height: 260px; width: 100%;">
+            <div class="chart-container mt-3" style="position: relative; height: 260px; width: 100%;">
                 <canvas id="downloadsGrowthChart"></canvas>
             </div>
         </div>
@@ -148,15 +210,15 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Downloads Growth',
+                        label: 'App Downloads (Creator Codes)',
                         data: dataPoints,
-                        borderColor: '#6366f1',
-                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
                         fill: true,
                         tension: 0.4,
                         borderWidth: 3,
                         pointBackgroundColor: '#ffffff',
-                        pointBorderColor: '#6366f1',
+                        pointBorderColor: '#4f46e5',
                         pointBorderWidth: 2,
                         pointRadius: 6,
                         pointHoverRadius: 8
@@ -168,6 +230,13 @@
                     plugins: {
                         legend: {
                             display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ' Installs: ' + context.raw.toLocaleString();
+                                }
+                            }
                         }
                     },
                     scales: {
@@ -178,6 +247,9 @@
                         },
                         y: {
                             min: 0,
+                            ticks: {
+                                stepSize: Math.ceil(Math.max(...dataPoints, 100) / 5)
+                            },
                             grid: {
                                 color: '#e2e8f0'
                             }

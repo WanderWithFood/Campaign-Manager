@@ -117,14 +117,17 @@ namespace CampaignManagement.Controllers
                 if (campaign == null)
                 {
                     ViewBag.Error = "Invalid campaign data";
-                    return View();
+                    return RedirectToAction("Index");
                 }
 
-                if (!ModelState.IsValid)
+                // If influencerId is selected but creatorName is empty, auto-fetch influencer name
+                if (campaign.influencerId.HasValue && campaign.influencerId.Value > 0 && string.IsNullOrWhiteSpace(campaign.creatorName))
                 {
-                    var errors = ModelState.Values.SelectMany(v => v.Errors);
-                    ViewBag.Error = "Please correct the errors in the form";
-                    return RedirectToAction("Index");
+                    var inf = await _influencersRepository.GetInfluencerByIdAsync(campaign.influencerId.Value);
+                    if (inf != null)
+                    {
+                        campaign.creatorName = inf.name;
+                    }
                 }
 
                 var newId = await _repository.CreateCampaignAsync(campaign);

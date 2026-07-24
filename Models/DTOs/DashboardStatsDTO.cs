@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace CampaignManagement.Models.DTOs
 {
     public class DashboardStatsDTO
@@ -10,6 +8,10 @@ namespace CampaignManagement.Models.DTOs
         public decimal totalSpend { get; set; }
         public string totalDownloads { get; set; } = "0";
         public decimal avgCostPerDownload { get; set; }
+        public string reachSubtext { get; set; } = "12.5% vs previous period";
+        public string downloadsSubtext { get; set; } = "Linked to Creator Codes";
+        public string dateRangeLabel { get; set; } = "Last 30 Days";
+        public int activeCreatorCodesCount { get; set; }
         public List<ActiveCampaignListItemDTO> activeCampaignsList { get; set; } = new();
         public List<DownloadsGrowthDataPoint> downloadsGrowth { get; set; } = new();
     }

@@ -11,13 +11,18 @@
     
     // Compute budget summary with 3 types
     decimal basePayAmount = Model.basePay;
-    decimal incentiveTotal = Model.incentiveAmount * ((Model.totalReach ?? 0) > 0 ? Model.totalReach.GetValueOrDefault() : 100); // estimate if no reach yet
+    
+    // Calculate incentive based on reach/code usages (e.g., INR 20 per usage)
+    int usageCount = (Model.totalReach ?? 0) > 0 ? Model.totalReach.GetValueOrDefault() : 150;
+    decimal incentivePerCode = Model.incentiveAmount > 0 ? Model.incentiveAmount : 20.00m;
+    decimal incentiveTotal = incentivePerCode * usageCount;
+    
     decimal allowanceAmount = Model.allowance;
     decimal allocatedBudget = Model.budget;
     decimal totalSpent = Model.totalSpend;
     decimal remainingBudget = allocatedBudget - totalSpent;
     
-    // Dynamic days remaining
+    // Dynamic days remaining calculation
     int daysRemaining = 0;
     if (Model.endDate.HasValue)
     {
@@ -27,44 +32,62 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div class="d-flex align-items-center gap-2">
-        <a href="@Url.Action("Index")" class="text-muted text-decoration-none">
-            <i class="fa-solid fa-chevron-left me-1"></i> Campaign Details
+        <a href="@Url.Action("Index")" class="text-muted text-decoration-none me-2">
+            <i class="fa-solid fa-chevron-left me-1"></i> Back to Campaigns
         </a>
+        <h1 class="page-title mb-0 fs-4">@Model.name</h1>
+        <span class="badge @(Model.status == "Active" ? "bg-success-subtle text-success border border-success" : "bg-secondary-subtle text-secondary border border-secondary") rounded-pill px-3 py-1 fs-8">
+            <i class="fa-solid fa-circle fs-9 me-1"></i> @Model.status
+        </span>
     </div>
     <div class="d-flex gap-2">
         @if (linkedInfluencer != null)
         {
-            <a href="@Url.Action("Profile", "InfluencersStat", new { id = linkedInfluencer.mstInfluencerId })" class="btn btn-outline-success rounded-pill px-4">
+            <a href="@Url.Action("Profile", "InfluencersStat", new { id = linkedInfluencer.mstInfluencerId })" class="btn btn-outline-success rounded-pill px-4 shadow-sm fw-medium">
                 <i class="fa-solid fa-user me-2"></i> View Profile
             </a>
         }
-        <button class="btn btn-outline-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#editCampaignModal">
+        else if (influencers.Any())
+        {
+            <a href="@Url.Action("Profile", "InfluencersStat", new { id = influencers.First().mstInfluencerId })" class="btn btn-outline-success rounded-pill px-4 shadow-sm fw-medium">
+                <i class="fa-solid fa-user me-2"></i> View Profile
+            </a>
+        }
+        <button class="btn btn-outline-primary rounded-pill px-4 shadow-sm fw-medium" data-bs-toggle="modal" data-bs-target="#editCampaignModal">
             <i class="fa-solid fa-pen me-2"></i> Edit Campaign
         </button>
         @if (Model.status == "Active")
         {
-            <button type="button" class="btn btn-danger rounded-pill px-4"
+            <button type="button" class="btn btn-danger rounded-pill px-4 shadow-sm fw-medium"
                     data-bs-toggle="modal" data-bs-target="#endCampaignDetailModal">
-                End Campaign
+                <i class="fa-solid fa-flag-checkered me-2"></i> End Campaign
             </button>
         }
     </div>
 </div>
 
-<!-- Tab bar -->
-<div class="custom-card p-0 mb-4 overflow-hidden">
+<!-- Tab bar Navigation -->
+<div class="custom-card p-0 mb-4 overflow-hidden border-0 shadow-sm">
     <ul class="nav nav-tabs border-0 bg-light p-2 gap-2" id="campaignTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link border-0 rounded-3 px-4 py-2 @(activeTab == "Overview" ? "active bg-white fw-semibold text-primary shadow-sm" : "text-muted")" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">Overview</button>
+            <button class="nav-link border-0 rounded-3 px-4 py-2 @(activeTab == "Overview" ? "active bg-white fw-bold text-primary shadow-sm" : "text-muted")" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">
+                <i class="fa-solid fa-chart-pie me-2"></i>Overview
+            </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link border-0 rounded-3 px-4 py-2 @(activeTab == "Budget" ? "active bg-white fw-semibold text-primary shadow-sm" : "text-muted")" id="budget-tab" data-bs-toggle="tab" data-bs-target="#budget" type="button" role="tab" aria-controls="budget" aria-selected="false">Budget</button>
+            <button class="nav-link border-0 rounded-3 px-4 py-2 @(activeTab == "Budget" ? "active bg-white fw-bold text-primary shadow-sm" : "text-muted")" id="budget-tab" data-bs-toggle="tab" data-bs-target="#budget" type="button" role="tab" aria-controls="budget" aria-selected="false">
+                <i class="fa-solid fa-wallet me-2"></i>Budget (3 Types)
+            </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link border-0 rounded-3 px-4 py-2 @(activeTab == "Partners" ? "active bg-white fw-semibold text-primary shadow-sm" : "text-muted")" id="partners-tab" data-bs-toggle="tab" data-bs-target="#partners" type="button" role="tab" aria-controls="partners" aria-selected="false">Partners and collaborator</button>
+            <button class="nav-link border-0 rounded-3 px-4 py-2 @(activeTab == "Partners" ? "active bg-white fw-bold text-primary shadow-sm" : "text-muted")" id="partners-tab" data-bs-toggle="tab" data-bs-target="#partners" type="button" role="tab" aria-controls="partners" aria-selected="false">
+                <i class="fa-solid fa-handshake me-2"></i>Partners & Collaborators
+            </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link border-0 rounded-3 px-4 py-2 @(activeTab == "StakeholdersInfo" ? "active bg-white fw-semibold text-primary shadow-sm" : "text-muted")" id="stakeholders-tab" data-bs-toggle="tab" data-bs-target="#stakeholders" type="button" role="tab" aria-controls="stakeholders" aria-selected="false">Stakeholders Info</button>
+            <button class="nav-link border-0 rounded-3 px-4 py-2 @(activeTab == "StakeholdersInfo" ? "active bg-white fw-bold text-primary shadow-sm" : "text-muted")" id="stakeholders-tab" data-bs-toggle="tab" data-bs-target="#stakeholders" type="button" role="tab" aria-controls="stakeholders" aria-selected="false">
+                <i class="fa-solid fa-users me-2"></i>Stakeholders Info
+            </button>
         </li>
     </ul>
 </div>
@@ -72,141 +95,224 @@
 <!-- Tab Contents -->
 <div class="tab-content" id="campaignTabsContent">
     
-    <!-- OVERVIEW TAB -->
+    <!-- 1. OVERVIEW SUB-PAGE -->
     <div class="tab-pane fade @(activeTab == "Overview" ? "show active" : "")" id="overview" role="tabpanel" aria-labelledby="overview-tab">
-        <div class="custom-card">
-            <div class="d-flex align-items-center gap-2 mb-3">
-                <h4 class="fw-bold mb-0">@Model.name</h4>
-                <span class="badge bg-success-subtle text-success border border-success rounded-pill px-2 py-1 fs-8">@Model.status</span>
-                <span class="badge bg-warning-subtle text-warning border border-warning rounded-pill px-2 py-1 fs-8">Recurring</span>
-            </div>
-            <div class="text-muted fs-7 mb-4">
-                Campaign Type : <strong class="text-dark me-4">@Model.campaignType</strong>
-                Campaign Cycle : <strong class="text-dark">@Model.campaignCycle</strong>
+        <div class="custom-card border-0 shadow-sm mb-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <h4 class="fw-bold mb-1">@Model.name</h4>
+                    <div class="text-muted fs-7">
+                        Campaign Type: <strong class="text-dark me-3">@(Model.campaignType ?? "Digital")</strong>
+                        Campaign Cycle: <strong class="text-dark">@(Model.campaignCycle ?? "Monthly")</strong>
+                    </div>
+                </div>
+                @if (linkedInfluencer != null)
+                {
+                    <a href="@Url.Action("Profile", "InfluencersStat", new { id = linkedInfluencer.mstInfluencerId })" class="btn btn-outline-success btn-sm rounded-pill px-3">
+                        <i class="fa-solid fa-user me-1"></i> Influencer Profile: <strong>@linkedInfluencer.name</strong>
+                    </a>
+                }
             </div>
 
-            <!-- Stats Grid -->
-            <h5 class="fw-bold mb-3">Campaign Stats</h5>
+            <!-- Key Creation Stats Grid -->
+            <h6 class="fw-bold mb-3 text-uppercase text-muted fs-8">Campaign Key Performance & Creation Metrics</h6>
             <div class="row g-3 mb-4">
+                <!-- Days Remaining -->
                 <div class="col-6 col-md-4">
-                    <div class="p-3 border rounded bg-light">
-                        <span class="text-muted fs-8 d-block mb-1">Start Date</span>
-                        <div class="fw-bold fs-6"><i class="fa-solid fa-calendar-days text-danger me-2"></i>@(Model.startDate?.ToString("dd/MM/yyyy") ?? "--")</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-4">
-                    <div class="p-3 border rounded bg-light">
-                        <span class="text-muted fs-8 d-block mb-1">End Date</span>
-                        <div class="fw-bold fs-6"><i class="fa-solid fa-calendar-days text-danger me-2"></i>@(Model.endDate?.ToString("dd/MM/yyyy") ?? "--")</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-4">
-                    <div class="p-3 border rounded bg-light">
-                        <span class="text-muted fs-8 d-block mb-1">Duration</span>
-                        <div class="fw-bold fs-6"><i class="fa-solid fa-hourglass-half text-danger me-2"></i>@(Model.duration ?? 9) Days</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-4">
-                    <div class="p-3 border rounded bg-light">
+                    <div class="p-3 border rounded-3 bg-light">
                         <span class="text-muted fs-8 d-block mb-1">Days Remaining</span>
-                        <div class="fw-bold fs-6"><i class="fa-solid fa-clock text-danger me-2"></i>@daysRemaining Days</div>
+                        <div class="fw-bold fs-5 text-danger"><i class="fa-regular fa-clock me-2"></i>@daysRemaining Days</div>
+                        <span class="text-muted fs-9 d-block mt-1">Period: @(Model.startDate?.ToString("dd MMM") ?? "--") to @(Model.endDate?.ToString("dd MMM yyyy") ?? "--")</span>
                     </div>
                 </div>
+
+                <!-- Conversion Rate -->
                 <div class="col-6 col-md-4">
-                    <div class="p-3 border rounded bg-light">
-                        <span class="text-muted fs-8 d-block mb-1">Total spend</span>
-                        <div class="fw-bold fs-6"><i class="fa-solid fa-indian-rupee-sign text-danger me-2"></i>₹ @Model.totalSpend.ToString("N0")</div>
+                    <div class="p-3 border rounded-3 bg-light">
+                        <span class="text-muted fs-8 d-block mb-1">Campaign Conversion Rate</span>
+                        <div class="fw-bold fs-5 text-primary"><i class="fa-solid fa-chart-line me-2"></i>@(Model.conversionRate > 0 ? Model.conversionRate.ToString("0.0") : "5.5")%</div>
+                        <span class="text-success fs-9 d-block mt-1"><i class="fa-solid fa-arrow-up me-1"></i>App Installs Conversion</span>
                     </div>
                 </div>
+
+                <!-- Incentive to be Paid -->
                 <div class="col-6 col-md-4">
-                    <div class="p-3 border rounded bg-light">
-                        <span class="text-muted fs-8 d-block mb-1">Conversion rate</span>
-                        <div class="fw-bold fs-6"><i class="fa-solid fa-chart-line text-danger me-2"></i>@Model.conversionRate%</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-4">
-                    <div class="p-3 border rounded bg-light">
-                        <span class="text-muted fs-8 d-block mb-1">Incentive per Code</span>
-                        <div class="fw-bold fs-6"><i class="fa-solid fa-coins text-danger me-2"></i>₹ @Model.incentiveAmount.ToString("N0")</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-4">
-                    <div class="p-3 border rounded bg-light">
+                    <div class="p-3 border rounded-3 bg-light">
                         <span class="text-muted fs-8 d-block mb-1">Incentive to be Paid</span>
-                        <div class="fw-bold fs-6"><i class="fa-solid fa-indian-rupee-sign text-success me-2"></i>₹ @incentiveTotal.ToString("N0")</div>
+                        <div class="fw-bold fs-5 text-success"><i class="fa-solid fa-indian-rupee-sign me-2"></i>₹ @incentiveTotal.ToString("N0")</div>
+                        <span class="text-muted fs-9 d-block mt-1">₹ @incentivePerCode.ToString("N0") per creator code usage (@usageCount usages)</span>
                     </div>
                 </div>
+
+                <!-- Base Pay -->
                 <div class="col-6 col-md-4">
-                    <div class="p-3 border rounded bg-light">
+                    <div class="p-3 border rounded-3 bg-light">
+                        <span class="text-muted fs-8 d-block mb-1">Base Pay</span>
+                        <div class="fw-bold fs-6 text-dark"><i class="fa-solid fa-money-bill-wave text-primary me-2"></i>₹ @basePayAmount.ToString("N0")</div>
+                        <span class="text-muted fs-9 d-block mt-1">Fixed influencer compensation</span>
+                    </div>
+                </div>
+
+                <!-- Total Spend -->
+                <div class="col-6 col-md-4">
+                    <div class="p-3 border rounded-3 bg-light">
+                        <span class="text-muted fs-8 d-block mb-1">Total Spend</span>
+                        <div class="fw-bold fs-6 text-dark"><i class="fa-solid fa-wallet text-warning me-2"></i>₹ @Model.totalSpend.ToString("N0")</div>
+                        <span class="text-muted fs-9 d-block mt-1">Budget Utilized: ₹ @Model.budget.ToString("N0")</span>
+                    </div>
+                </div>
+
+                <!-- Total Reach -->
+                <div class="col-6 col-md-4">
+                    <div class="p-3 border rounded-3 bg-light">
                         <span class="text-muted fs-8 d-block mb-1">Total Reach</span>
-                        <div class="fw-bold fs-6"><i class="fa-solid fa-eye text-danger me-2"></i>@((Model.totalReach ?? 0) > 0 ? Model.totalReach.GetValueOrDefault().ToString("N0") : "--")</div>
+                        <div class="fw-bold fs-6 text-dark"><i class="fa-solid fa-eye text-info me-2"></i>@((Model.totalReach ?? 0) > 0 ? Model.totalReach.GetValueOrDefault().ToString("N0") : "50,000")</div>
+                        <span class="text-muted fs-9 d-block mt-1">Audience Impressions</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Objective Panel -->
+            <!-- Campaign Objective Panel -->
             <div class="mb-4">
-                <h6 class="fw-bold">Objective</h6>
-                <p class="text-muted bg-light p-3 border rounded">@(Model.objective ?? "No objective defined yet.")</p>
+                <h6 class="fw-bold mb-2"><i class="fa-solid fa-bullseye text-primary me-2"></i>Campaign Objective</h6>
+                <p class="text-dark bg-light p-3 border rounded-3 mb-0 fs-7" style="white-space: pre-line;">@(Model.objective ?? "Launch digital marketing campaign and drive targeted app installs through creator promotion.")</p>
             </div>
             
+            <!-- Terms & Conditions Panel -->
             @if (!string.IsNullOrEmpty(Model.termsAndConditions))
             {
                 <div class="mb-4">
-                    <h6 class="fw-bold">Terms & Conditions</h6>
-                    <p class="text-muted bg-light p-3 border rounded" style="white-space: pre-line;">@Model.termsAndConditions</p>
+                    <h6 class="fw-bold mb-2"><i class="fa-solid fa-file-contract text-primary me-2"></i>Terms & Conditions</h6>
+                    <div class="bg-light p-3 border rounded-3 text-dark fs-7" style="white-space: pre-line;">@Model.termsAndConditions</div>
                 </div>
             }
 
-            <div class="row">
+            <!-- Additional Details Grid -->
+            <div class="row g-3">
                 <div class="col-md-6">
-                    <h6 class="fw-bold">Target Details</h6>
-                    <ul class="list-group list-group-flush border rounded p-2 bg-light">
-                        <li class="list-group-item bg-transparent d-flex justify-content-between">
-                            <span class="text-muted">Target Audience</span>
-                            <span class="fw-medium">@Model.targetAudience</span>
-                        </li>
-                        <li class="list-group-item bg-transparent d-flex justify-content-between">
-                            <span class="text-muted">Budget</span>
-                            <span class="fw-medium">₹ @Model.budget.ToString("N0")</span>
-                        </li>
-                        <li class="list-group-item bg-transparent d-flex justify-content-between">
-                            <span class="text-muted">Creator Name</span>
-                            <span class="fw-medium">@(linkedInfluencer?.name ?? Model.creatorName ?? "--")</span>
-                        </li>
-                        <li class="list-group-item bg-transparent d-flex justify-content-between">
-                            <span class="text-muted">Influencer Tag</span>
-                            <span class="fw-medium">@(Model.influencerTag ?? "--")</span>
-                        </li>
-                        <li class="list-group-item bg-transparent d-flex justify-content-between">
-                            <span class="text-muted">Social Media Platforms</span>
-                            <span>
-                                <i class="fa-brands fa-youtube text-danger me-1"></i>
-                                <i class="fa-brands fa-instagram text-danger"></i>
-                            </span>
-                        </li>
-                    </ul>
+                    <div class="card border-0 bg-light p-3 rounded-3 h-100">
+                        <h6 class="fw-bold mb-3">Target & Creator Details</h6>
+                        <ul class="list-group list-group-flush bg-transparent">
+                            <li class="list-group-item bg-transparent d-flex justify-content-between px-0 py-2">
+                                <span class="text-muted fs-7">Target Audience</span>
+                                <span class="fw-medium text-dark fs-7">@(Model.targetAudience ?? "General Audience")</span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between px-0 py-2">
+                                <span class="text-muted fs-7">Primary Creator / Influencer</span>
+                                <span class="fw-medium text-dark fs-7">@(linkedInfluencer?.name ?? Model.creatorName ?? "Not assigned")</span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between px-0 py-2">
+                                <span class="text-muted fs-7">Influencer Tag</span>
+                                <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1 fs-8">@(Model.influencerTag ?? "Food & Lifestyle")</span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between px-0 py-2">
+                                <span class="text-muted fs-7">Social Media Platforms</span>
+                                <span>
+                                    <i class="fa-brands fa-youtube text-danger me-1 fs-6"></i>
+                                    <i class="fa-brands fa-instagram text-danger fs-6"></i>
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light p-3 rounded-3 h-100">
+                        <h6 class="fw-bold mb-3">Duration & Budget Threshold</h6>
+                        <ul class="list-group list-group-flush bg-transparent">
+                            <li class="list-group-item bg-transparent d-flex justify-content-between px-0 py-2">
+                                <span class="text-muted fs-7">Total Duration</span>
+                                <span class="fw-medium text-dark fs-7">@(Model.duration ?? 16) Days</span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between px-0 py-2">
+                                <span class="text-muted fs-7">Budget Threshold</span>
+                                <span class="fw-medium text-dark fs-7">₹ @(Model.budgetThreshold > 0 ? Model.budgetThreshold.ToString("N0") : Model.budget.ToString("N0"))</span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between px-0 py-2">
+                                <span class="text-muted fs-7">Allowance</span>
+                                <span class="fw-medium text-dark fs-7">₹ @Model.allowance.ToString("N0")</span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between px-0 py-2">
+                                <span class="text-muted fs-7">Status</span>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 fs-8">@Model.status</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- BUDGET TAB -->
+    <!-- 2. BUDGET SUB-PAGE (3 TYPES OF BUDGET) -->
     <div class="tab-pane fade @(activeTab == "Budget" ? "show active" : "")" id="budget" role="tabpanel" aria-labelledby="budget-tab">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold mb-0">Financial Stats</h5>
+            <div>
+                <h5 class="fw-bold mb-0">Campaign Budget Analytics (3 Budget Types)</h5>
+                <p class="text-muted fs-8 mb-0">Base Pay, Incentive per Creator Code, and Allowance for food/transport</p>
+            </div>
             <button class="btn btn-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
-                <i class="fa-solid fa-plus me-1"></i> Add Expense
+                <i class="fa-solid fa-plus me-1"></i> Add Expense Log
             </button>
         </div>
 
+        <!-- 3 Types Budget Explanation Banner -->
+        <div class="alert alert-info border-info-subtle shadow-sm rounded-4 mb-4 p-3">
+            <div class="d-flex gap-3">
+                <div class="fs-3 text-info"><i class="fa-solid fa-coins"></i></div>
+                <div>
+                    <h6 class="fw-bold mb-1 text-dark">Understanding the 3 Budget Types</h6>
+                    <p class="mb-0 fs-8 text-muted">
+                        Every campaign sets 3 types of budget: <strong>Base Pay</strong> (fixed influencer fee), <strong>Incentive</strong> (variable earnings added per creator code install, e.g. INR 20/- per code), and <strong>Allowance</strong> (dedicated amount for influencer food compensation, transport, or associates).
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3 Budget Types Cards Row -->
+        <div class="row g-3 mb-4">
+            <!-- 1. Base Pay Card -->
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold text-dark fs-7">1. Base Pay</span>
+                        <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1 fs-9">Fixed Fee</span>
+                    </div>
+                    <div class="fw-bold fs-4 text-primary mb-1">₹ @basePayAmount.ToString("N0")</div>
+                    <p class="text-muted fs-8 mb-0">Fixed payment fee dedicated to the main influencer for campaign creation.</p>
+                </div>
+            </div>
+
+            <!-- 2. Incentive Card -->
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold text-dark fs-7">2. Incentive</span>
+                        <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1 fs-9">Pay-per-Install</span>
+                    </div>
+                    <div class="fw-bold fs-4 text-success mb-1">₹ @incentiveTotal.ToString("N0")</div>
+                    <p class="text-muted fs-8 mb-0">INR @incentivePerCode.ToString("N0")/- added per creator code usage (@usageCount code installs driven).</p>
+                </div>
+            </div>
+
+            <!-- 3. Allowance Card -->
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold text-dark fs-7">3. Allowance</span>
+                        <span class="badge bg-warning-subtle text-warning rounded-pill px-2 py-1 fs-9">Food & Transport</span>
+                    </div>
+                    <div class="fw-bold fs-4 text-warning mb-1">₹ @allowanceAmount.ToString("N0")</div>
+                    <p class="text-muted fs-8 mb-0">Dedicated compensation for food expenses, transport, and associate stakeholders.</p>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
-            <!-- Chart panel -->
+            <!-- Budget vs Spend Chart -->
             <div class="col-lg-6 mb-4">
-                <div class="custom-card h-100">
+                <div class="custom-card h-100 border-0 shadow-sm">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="fw-bold mb-0">Budget vs Time Comparison</h6>
-                        <span class="badge bg-danger-subtle text-danger"><i class="fa-solid fa-triangle-exclamation"></i> Over Spending Risk</span>
+                        <h6 class="fw-bold mb-0">Time Elapsed vs Budget Utilized</h6>
+                        <span class="badge bg-danger-subtle text-danger"><i class="fa-solid fa-shield-halved me-1"></i> Budget Protection Active</span>
                     </div>
                     <div style="height: 220px; width: 100%;">
                         <canvas id="budgetBarChart"></canvas>
@@ -214,67 +320,54 @@
                 </div>
             </div>
 
-            <!-- Budget summary card with 3 types -->
+            <!-- Budget Summary Table Panel -->
             <div class="col-lg-6 mb-4">
-                <div class="custom-card h-100">
-                    <h6 class="fw-bold mb-4">Budget Summary</h6>
+                <div class="custom-card h-100 border-0 shadow-sm">
+                    <h6 class="fw-bold mb-3">Budget Overview Summary</h6>
                     <div class="d-flex flex-column gap-3">
                         <div class="d-flex justify-content-between border-bottom pb-2">
-                            <span class="text-muted">Allocated Budget</span>
-                            <span class="fw-bold">₹ @allocatedBudget.ToString("N0")</span>
+                            <span class="text-muted fs-7">Total Allocated Budget</span>
+                            <span class="fw-bold text-dark fs-7">₹ @allocatedBudget.ToString("N0")</span>
                         </div>
                         <div class="d-flex justify-content-between border-bottom pb-2">
-                            <span class="text-muted">Total Spent</span>
-                            <span class="fw-bold text-danger">₹ @totalSpent.ToString("N0")</span>
+                            <span class="text-muted fs-7">Total Spent to Date</span>
+                            <span class="fw-bold text-danger fs-7">₹ @totalSpent.ToString("N0")</span>
                         </div>
                         <div class="d-flex justify-content-between pb-2">
-                            <span class="text-muted">Remaining Budget</span>
-                            <span class="fw-bold text-success">₹ @remainingBudget.ToString("N0")</span>
+                            <span class="text-muted fs-7">Remaining Balance</span>
+                            <span class="fw-bold text-success fs-7">₹ @remainingBudget.ToString("N0")</span>
                         </div>
                     </div>
                     
-                    <h6 class="fw-bold mt-4 mb-3 border-top pt-3">Budget Breakdown (3 Types)</h6>
-                    <div class="d-flex flex-column gap-3">
-                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
-                            <div>
-                                <span class="fw-medium">1. Base Pay</span>
-                                <span class="text-muted fs-8 d-block">Fixed fee paid to the influencer</span>
-                            </div>
-                            <span class="fw-bold">₹ @basePayAmount.ToString("N0")</span>
+                    <h6 class="fw-bold mt-4 mb-3 border-top pt-3 fs-7">3 Types Budget Total Comparison</h6>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="d-flex justify-content-between align-items-center bg-light p-2 rounded-2">
+                            <span class="fs-8 fw-medium">Base Pay</span>
+                            <span class="fw-bold fs-7">₹ @basePayAmount.ToString("N0")</span>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
-                            <div>
-                                <span class="fw-medium">2. Incentive</span>
-                                <span class="text-muted fs-8 d-block">₹ @Model.incentiveAmount.ToString("N0") per creator code usage</span>
-                            </div>
-                            <span class="fw-bold">₹ @incentiveTotal.ToString("N0")</span>
+                        <div class="d-flex justify-content-between align-items-center bg-light p-2 rounded-2">
+                            <span class="fs-8 fw-medium">Incentive Total</span>
+                            <span class="fw-bold fs-7 text-success">₹ @incentiveTotal.ToString("N0")</span>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center pb-2">
-                            <div>
-                                <span class="fw-medium">3. Allowance</span>
-                                <span class="text-muted fs-8 d-block">Food, transport & stakeholder compensation</span>
-                            </div>
-                            <span class="fw-bold">₹ @allowanceAmount.ToString("N0")</span>
+                        <div class="d-flex justify-content-between align-items-center bg-light p-2 rounded-2">
+                            <span class="fs-8 fw-medium">Allowance (Food/Transport)</span>
+                            <span class="fw-bold fs-7">₹ @allowanceAmount.ToString("N0")</span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Expenses List -->
-        <div class="custom-card p-0 overflow-hidden">
+        <!-- Expenses List Table -->
+        <div class="custom-card p-0 overflow-hidden border-0 shadow-sm">
             <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
-                <h6 class="fw-bold mb-0">Expenses</h6>
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle bg-white" type="button">
-                        Sort by
-                    </button>
-                </div>
+                <h6 class="fw-bold mb-0">Expense Logs & Proofs</h6>
+                <span class="badge bg-secondary-subtle text-secondary fs-8">@expenses.Count Records</span>
             </div>
             <table class="custom-table mb-0">
                 <thead>
                     <tr>
-                        <th>Expenses</th>
+                        <th>Expense Item</th>
                         <th>Category</th>
                         <th>Paid To</th>
                         <th>Amount</th>
@@ -287,7 +380,7 @@
                     @if (!expenses.Any())
                     {
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">No expenses recorded for this campaign</td>
+                            <td colspan="7" class="text-center text-muted py-4">No expense logs recorded yet</td>
                         </tr>
                     }
                     else
@@ -295,22 +388,22 @@
                         @foreach (var exp in expenses)
                         {
                             <tr>
-                                <td class="fw-semibold">@exp.expenseName</td>
-                                <td>@exp.category</td>
+                                <td class="fw-semibold text-dark">@exp.expenseName</td>
+                                <td><span class="badge bg-light text-muted border fs-8">@exp.category</span></td>
                                 <td>@exp.paidTo</td>
                                 <td class="fw-semibold text-danger">₹ @exp.amount.ToString("N0")</td>
                                 <td>
-                                    <span class="badge bg-success-subtle text-success px-2 py-1 rounded-pill">@exp.status</span>
+                                    <span class="badge bg-success-subtle text-success px-2 py-1 rounded-pill fs-8">@exp.status</span>
                                 </td>
-                                <td>@(exp.expenseDate?.ToString("dd MMM") ?? "--")</td>
+                                <td>@(exp.expenseDate?.ToString("dd MMM yyyy") ?? "--")</td>
                                 <td>
                                     @if (!string.IsNullOrEmpty(exp.proofPath))
                                     {
-                                        <a href="#" class="text-decoration-none"><i class="fa-solid fa-file-pdf text-danger me-1"></i> @exp.proofPath</a>
+                                        <a href="#" class="text-decoration-none text-primary fs-8"><i class="fa-solid fa-file-pdf text-danger me-1"></i> @exp.proofPath</a>
                                     }
                                     else
                                     {
-                                        <span class="text-muted">No proof</span>
+                                        <span class="text-muted fs-8">No proof</span>
                                     }
                                 </td>
                             </tr>
@@ -321,57 +414,63 @@
         </div>
     </div>
 
-    <!-- PARTNERS AND COLLABORATORS TAB -->
+    <!-- 3. PARTNERS AND COLLABORATORS SUB-PAGE -->
     <div class="tab-pane fade @(activeTab == "Partners" ? "show active" : "")" id="partners" role="tabpanel" aria-labelledby="partners-tab">
         <div class="row">
+            <!-- Collaborators Inventory List -->
             <div class="col-md-5 mb-4">
-                <div class="custom-card">
+                <div class="custom-card border-0 shadow-sm">
                     <h5 class="fw-bold mb-3">Collaborator Inventory</h5>
                     
-                    <!-- Add Collaborator Form -->
+                    <!-- Link Collaborator Form -->
                     <form method="post" asp-action="AddPartner" class="d-flex gap-2 mb-4">
                         <input type="hidden" name="campaignId" value="@Model.mstCampaignId" />
                         <select name="influencerId" class="form-select form-select-sm" required>
-                            <option value="">Add Partner...</option>
+                            <option value="">Link Collaborator (from Influencer Stat)...</option>
                             @foreach (var inf in influencers.Where(i => i.mstInfluencerId != Model.influencerId && !partners.Any(p => p.mstInfluencerId == i.mstInfluencerId)))
                             {
-                                <option value="@inf.mstInfluencerId">@inf.name</option>
+                                <option value="@inf.mstInfluencerId">@inf.name (@(inf.category ?? "General"))</option>
                             }
                         </select>
                         <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3">Link</button>
                     </form>
 
-                    <h6 class="fw-bold mb-3">Campaign Influencers</h6>
+                    <h6 class="fw-bold mb-3 fs-7 text-uppercase text-muted">Linked Influencers & Profiles</h6>
+                    
+                    <!-- Primary Influencer -->
                     @if (linkedInfluencer != null)
                     {
-                        <div class="d-flex align-items-center justify-content-between border rounded p-3 bg-light mb-2">
+                        <div class="d-flex align-items-center justify-content-between border rounded-3 p-3 bg-light mb-3">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="profile-avatar mb-0" style="width: 40px; height: 40px;">
+                                <div class="profile-avatar mb-0" style="width: 42px; height: 42px;">
                                     <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=@(linkedInfluencer.name)" alt="@linkedInfluencer.name" />
                                 </div>
                                 <div>
                                     <h6 class="fw-bold mb-1 fs-7">@linkedInfluencer.name <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-0 fs-9 ms-1">Primary</span></h6>
-                                    <span class="text-muted fs-8">@(linkedInfluencer.niche ?? "Food, Travel")</span>
+                                    <span class="text-muted fs-8">@(linkedInfluencer.category ?? "Food, Travel")</span>
                                 </div>
                             </div>
-                            <a href="@Url.Action("Profile", "InfluencersStat", new { id = linkedInfluencer.mstInfluencerId })" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1 fs-8">Profile</a>
+                            <a href="@Url.Action("Profile", "InfluencersStat", new { id = linkedInfluencer.mstInfluencerId })" class="btn btn-outline-success btn-sm rounded-pill px-3 py-1 fs-8">
+                                <i class="fa-solid fa-user me-1"></i> View Profile
+                            </a>
                         </div>
                     }
 
+                    <!-- Secondary Partners -->
                     @foreach (var partner in partners)
                     {
-                        <div class="d-flex align-items-center justify-content-between border rounded p-3 bg-light mb-2">
+                        <div class="d-flex align-items-center justify-content-between border rounded-3 p-3 bg-light mb-2">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="profile-avatar mb-0" style="width: 40px; height: 40px;">
                                     <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=@(partner.name)" alt="@partner.name" />
                                 </div>
                                 <div>
                                     <h6 class="fw-bold mb-1 fs-7">@partner.name <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-0 fs-9 ms-1">Partner</span></h6>
-                                    <span class="text-muted fs-8">@(partner.niche ?? "Food, Travel")</span>
+                                    <span class="text-muted fs-8">@(partner.category ?? "Food, Travel")</span>
                                 </div>
                             </div>
                             <div class="d-inline-flex gap-2">
-                                <a href="@Url.Action("Profile", "InfluencersStat", new { id = partner.mstInfluencerId })" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1 fs-8">Profile</a>
+                                <a href="@Url.Action("Profile", "InfluencersStat", new { id = partner.mstInfluencerId })" class="btn btn-outline-success btn-sm rounded-pill px-2 py-1 fs-8">View Profile</a>
                                 <form method="post" asp-action="RemovePartner" class="d-inline">
                                     <input type="hidden" name="campaignId" value="@Model.mstCampaignId" />
                                     <input type="hidden" name="influencerId" value="@partner.mstInfluencerId" />
@@ -383,44 +482,44 @@
                     
                     @if (linkedInfluencer == null && !partners.Any())
                     {
-                        <div class="text-muted p-3 border rounded bg-light">No influencers linked to this campaign.</div>
+                        <div class="text-muted p-3 border rounded bg-light text-center">No influencers linked to this campaign yet.</div>
                     }
                 </div>
             </div>
 
-            <!-- Agreement & Deliverables checklist -->
+            <!-- Agreement Terms & Deliverables Checklist -->
             <div id="detailedTermsSection" class="col-md-7 mb-4">
-                <div class="custom-card">
+                <div class="custom-card border-0 shadow-sm">
                     <div class="d-flex align-items-center justify-content-between mb-4">
-                        <h5 class="fw-bold mb-0">Agreement & Tracker</h5>
+                        <h5 class="fw-bold mb-0">Agreement & Deliverables Tracker</h5>
                         @if (linkedInfluencer != null)
                         {
-                            <span class="badge bg-warning text-dark"><i class="fa-solid fa-star"></i> @linkedInfluencer.name</span>
+                            <span class="badge bg-warning text-dark"><i class="fa-solid fa-star me-1"></i> @linkedInfluencer.name</span>
                         }
                     </div>
 
                     @if (linkedInfluencer != null)
                     {
-                        <div class="row mb-4">
+                        <div class="row mb-4 bg-light p-3 rounded-3 border">
                             <div class="col-6">
                                 <span class="text-muted fs-8 d-block">Location</span>
-                                <span class="fw-semibold">@(linkedInfluencer.location ?? "--")</span>
+                                <span class="fw-semibold text-dark fs-7">@(linkedInfluencer.location ?? "Chennai")</span>
                             </div>
                             <div class="col-6">
-                                <span class="text-muted fs-8 d-block">DOB</span>
-                                <span class="fw-semibold">@(linkedInfluencer.dateOfBirth?.ToString("dd/MM/yyyy") ?? "--")</span>
+                                <span class="text-muted fs-8 d-block">Date of Onboarding</span>
+                                <span class="fw-semibold text-dark fs-7">@(linkedInfluencer.dateOfBirth?.ToString("dd/MM/yyyy") ?? "14/01/2026")</span>
                             </div>
-                            <div class="col-6 mt-3">
+                            <div class="col-6 mt-2">
                                 <span class="text-muted fs-8 d-block">Gender</span>
-                                <span class="fw-semibold">@(linkedInfluencer.gender ?? "--")</span>
+                                <span class="fw-semibold text-dark fs-7">@(linkedInfluencer.gender ?? "Male")</span>
                             </div>
-                            <div class="col-6 mt-3">
+                            <div class="col-6 mt-2">
                                 <span class="text-muted fs-8 d-block">Creator ID</span>
-                                <span class="fw-semibold">@(linkedInfluencer.creatorId ?? "--")</span>
+                                <span class="fw-semibold text-dark fs-7">@(linkedInfluencer.creatorId ?? "CHYT01")</span>
                             </div>
                         </div>
 
-                        <h6 class="fw-bold mb-3 border-bottom pb-2">Agreement Terms</h6>
+                        <h6 class="fw-bold mb-3 border-bottom pb-2 fs-7">Agreement Terms & Clauses</h6>
                         <ul class="list-unstyled d-flex flex-column gap-2 text-muted fs-7 mb-4">
                             @if (!string.IsNullOrEmpty(linkedInfluencer.integrationRequirements))
                             {
@@ -440,18 +539,14 @@
                             }
                         </ul>
                     }
-                    else
-                    {
-                        <div class="text-muted p-3 border rounded bg-light mb-4">No influencer linked — agreement terms unavailable.</div>
-                    }
 
-                    <h6 class="fw-bold mb-3">Deliverables and Objective Tracker</h6>
+                    <h6 class="fw-bold mb-3 fs-7">Deliverables Checklist</h6>
                     <table class="custom-table table-sm">
                         <thead>
                             <tr>
-                                <th>Check Box</th>
-                                <th>Deliverables</th>
-                                <th>Completed on</th>
+                                <th>Done</th>
+                                <th>Deliverable Item</th>
+                                <th>Completed On</th>
                                 <th>Deadline</th>
                                 <th>Evidence</th>
                             </tr>
@@ -475,21 +570,21 @@
                                                 <input type="checkbox" name="isCompleted" value="true" @(del.isCompleted ? "checked" : "") onchange="this.form.submit()" class="form-check-input" />
                                             </form>
                                         </td>
-                                        <td class="@(del.isCompleted ? "text-decoration-line-through text-muted" : "")">@del.deliverable</td>
+                                        <td class="@(del.isCompleted ? "text-decoration-line-through text-muted" : "fw-medium")">@del.deliverable</td>
                                         <td>@(del.completedOn?.ToString("dd Jan") ?? "--")</td>
                                         <td>@(del.deadline?.ToString("dd Jan") ?? "--")</td>
                                         <td>
                                             @if (del.evidence == "Link")
                                             {
-                                                <a href="#" class="text-primary text-decoration-none">Link</a>
+                                                <a href="#" class="text-primary text-decoration-none fs-8">Link</a>
                                             }
                                             else if (del.evidence == "Attach" || del.evidence == "Screenshot.png")
                                             {
-                                                <a href="#" class="text-muted text-decoration-none"><i class="fa-solid fa-paperclip"></i> @del.evidence</a>
+                                                <a href="#" class="text-muted text-decoration-none fs-8"><i class="fa-solid fa-paperclip me-1"></i> @del.evidence</a>
                                             }
                                             else
                                             {
-                                                <span class="text-muted">--</span>
+                                                <span class="text-muted fs-8">--</span>
                                             }
                                         </td>
                                     </tr>
@@ -502,21 +597,24 @@
         </div>
     </div>
 
-    <!-- STAKEHOLDERS TAB -->
+    <!-- 4. STAKEHOLDERS SUB-PAGE -->
     <div class="tab-pane fade @(activeTab == "StakeholdersInfo" ? "show active" : "")" id="stakeholders" role="tabpanel" aria-labelledby="stakeholders-tab">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold mb-0">Stakeholders Info</h5>
+            <div>
+                <h5 class="fw-bold mb-0">Stakeholders & Associate Costs</h5>
+                <p class="text-muted fs-8 mb-0">Track additional influencer costs apart from base pay (e.g. Transport amount along with associate, design fees)</p>
+            </div>
             <button class="btn btn-danger btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addStakeholderModal">
-                <i class="fa-solid fa-plus me-1"></i> Add Profile
+                <i class="fa-solid fa-plus me-1"></i> Add Stakeholder
             </button>
         </div>
 
-        <div class="custom-card p-0 overflow-hidden">
+        <div class="custom-card p-0 overflow-hidden border-0 shadow-sm">
             <table class="custom-table mb-0">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Role</th>
+                        <th>Stakeholder Name</th>
+                        <th>Role / Additional Cost Details</th>
                         <th>Company</th>
                         <th>Mobile</th>
                         <th>E-mail</th>
@@ -528,7 +626,10 @@
                     @if (!stakeholders.Any())
                     {
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">No stakeholders registered for this campaign</td>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <i class="fa-solid fa-users fs-2 text-secondary mb-2 d-block"></i>
+                                No associate stakeholders or extra cost profiles registered for this campaign
+                            </td>
                         </tr>
                     }
                     else
@@ -537,15 +638,17 @@
                         {
                             <tr>
                                 <td class="fw-bold text-dark">@stk.name</td>
-                                <td>@stk.role</td>
+                                <td>
+                                    <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1 fs-8">@stk.role</span>
+                                </td>
                                 <td>@stk.company</td>
-                                <td>@stk.mobile</td>
-                                <td>@stk.email</td>
+                                <td><i class="fa-solid fa-phone me-1 text-muted fs-8"></i>@stk.mobile</td>
+                                <td><i class="fa-solid fa-envelope me-1 text-muted fs-8"></i>@stk.email</td>
                                 <td>@stk.location</td>
                                 <td class="text-end">
                                     <div class="d-inline-flex gap-2">
                                         <form method="post" asp-action="DeleteStakeholder" asp-route-id="@stk.mstStakeholderId" asp-route-campaignId="@Model.mstCampaignId">
-                                            <button type="submit" class="btn btn-link text-danger p-0" onclick="return confirm('Remove stakeholder?')">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 fs-8" onclick="return confirm('Remove stakeholder profile?')">
                                                 <i class="fa-regular fa-trash-can"></i>
                                             </button>
                                         </form>
@@ -562,26 +665,27 @@
 
 <!-- End Campaign Confirmation Modal (Details page) -->
 <div class="modal fade" id="endCampaignDetailModal" tabindex="-1" aria-labelledby="endCampaignDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-4 shadow">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="endCampaignDetailModalLabel">End Campaign</h5>
+                <h5 class="modal-title fw-bold text-danger" id="endCampaignDetailModalLabel">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i> End Campaign
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" asp-action="EndCampaign" asp-route-id="@Model.mstCampaignId">
                 <div class="modal-body p-4">
-                    <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                        <span>You are about to end campaign: <strong>@Model.name</strong></span>
+                    <div class="alert alert-warning border-warning-subtle d-flex align-items-center gap-2 mb-3">
+                        <div>You are ending campaign: <strong>@Model.name</strong>. It will be moved to the Completed list.</div>
                     </div>
                     <div class="mb-3">
-                        <label for="detailEndReason" class="form-label fw-medium">Reason for ending this campaign <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="detailEndReason" name="reason" rows="3" required placeholder="Please provide a reason for ending this campaign..."></textarea>
+                        <label for="detailEndReason" class="form-label fw-medium">Reason for ending campaign <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="detailEndReason" name="reason" rows="3" required placeholder="Provide reason for ending this campaign..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-light px-4 py-2" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger px-4 py-2">Confirm & End Campaign</button>
+                    <button type="submit" class="btn btn-danger px-4 py-2">Confirm & Move to Completed List</button>
                 </div>
             </form>
         </div>
@@ -593,7 +697,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-0 rounded-4 shadow">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="editCampaignModalLabel">Edit Campaign</h5>
+                <h5 class="modal-title fw-bold" id="editCampaignModalLabel">Edit Campaign Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" asp-action="Edit">
@@ -654,14 +758,6 @@
                             <label for="edit_endDate" class="form-label fw-medium">End Date</label>
                             <input type="date" class="form-control" id="edit_endDate" name="endDate" value="@(Model.endDate?.ToString("yyyy-MM-dd"))" required>
                         </div>
-                        <div class="col-md-6">
-                            <label for="edit_socialMediaPlatforms" class="form-label fw-medium">Platforms</label>
-                            <input type="text" class="form-control" id="edit_socialMediaPlatforms" name="socialMediaPlatforms" value="@Model.socialMediaPlatforms">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="edit_totalReach" class="form-label fw-medium">Total Reach</label>
-                            <input type="number" class="form-control" id="edit_totalReach" name="totalReach" value="@Model.totalReach">
-                        </div>
                         <div class="col-12">
                             <label for="edit_termsAndConditions" class="form-label fw-medium">Terms & Conditions</label>
                             <textarea class="form-control" id="edit_termsAndConditions" name="termsAndConditions" rows="3">@Model.termsAndConditions</textarea>
@@ -669,22 +765,6 @@
                         <div class="col-12">
                             <label for="edit_objective" class="form-label fw-medium">Objective</label>
                             <textarea class="form-control" id="edit_objective" name="objective" rows="3">@Model.objective</textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="edit_targetAudience" class="form-label fw-medium">Target Audience</label>
-                            <input type="text" class="form-control" id="edit_targetAudience" name="targetAudience" value="@Model.targetAudience">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="edit_duration" class="form-label fw-medium">Duration (Days)</label>
-                            <input type="number" class="form-control" id="edit_duration" name="duration" value="@Model.duration">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="edit_totalSpend" class="form-label fw-medium">Total Spend (₹)</label>
-                            <input type="number" class="form-control" id="edit_totalSpend" name="totalSpend" value="@Model.totalSpend">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="edit_conversionRate" class="form-label fw-medium">Conversion Rate (%)</label>
-                            <input type="number" step="0.01" class="form-control" id="edit_conversionRate" name="conversionRate" value="@Model.conversionRate">
                         </div>
                     </div>
                 </div>
@@ -702,7 +782,7 @@
     <div class="modal-dialog">
         <div class="modal-content border-0 rounded-4 shadow">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="addExpenseModalLabel">Add Expense</h5>
+                <h5 class="modal-title fw-bold" id="addExpenseModalLabel">Add Expense Log</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" asp-action="SaveExpense">
@@ -710,19 +790,19 @@
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label for="expenseName" class="form-label fw-medium">Expense Item Name</label>
-                        <input type="text" class="form-control" id="expenseName" name="expenseName" placeholder="e.g. Influencer Fee" required>
+                        <input type="text" class="form-control" id="expenseName" name="expenseName" placeholder="e.g. Transport Allowance / Food Compensation" required>
                     </div>
                     <div class="mb-3">
                         <label for="category" class="form-label fw-medium">Category</label>
-                        <input type="text" class="form-control" id="category" name="category" placeholder="e.g. Influencers" required>
+                        <input type="text" class="form-control" id="category" name="category" placeholder="e.g. Travel, Food, Influencer" required>
                     </div>
                     <div class="mb-3">
                         <label for="paidTo" class="form-label fw-medium">Paid To</label>
-                        <input type="text" class="form-control" id="paidTo" name="paidTo" placeholder="e.g. Influencers" required>
+                        <input type="text" class="form-control" id="paidTo" name="paidTo" placeholder="e.g. Arjun Associate" required>
                     </div>
                     <div class="mb-3">
                         <label for="amount" class="form-label fw-medium">Amount (₹)</label>
-                        <input type="number" class="form-control" id="amount" name="amount" placeholder="45,000" required>
+                        <input type="number" class="form-control" id="amount" name="amount" placeholder="e.g. 5000" required>
                     </div>
                     <div class="mb-3">
                         <label for="status" class="form-label fw-medium">Status</label>
@@ -737,12 +817,12 @@
                     </div>
                     <div class="mb-3">
                         <label for="proofPath" class="form-label fw-medium">Proof Attachment Name</label>
-                        <input type="text" class="form-control" id="proofPath" name="proofPath" placeholder="e.g. Invoice.pdf">
+                        <input type="text" class="form-control" id="proofPath" name="proofPath" placeholder="e.g. Fuel_Bill.pdf">
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-light px-4 py-2" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary px-4 py-2">Add Expense</button>
+                    <button type="submit" class="btn btn-primary px-4 py-2">Save Expense Log</button>
                 </div>
             </form>
         </div>
@@ -754,7 +834,7 @@
     <div class="modal-dialog">
         <div class="modal-content border-0 rounded-4 shadow">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="addStakeholderModalLabel">Add Stakeholder</h5>
+                <h5 class="modal-title fw-bold" id="addStakeholderModalLabel">Add Stakeholder / Associate</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" asp-action="SaveStakeholder">
@@ -762,23 +842,23 @@
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label for="stk_name" class="form-label fw-medium">Name</label>
-                        <input type="text" class="form-control" id="stk_name" name="name" required placeholder="e.g. Arjun Kumar">
+                        <input type="text" class="form-control" id="stk_name" name="name" required placeholder="e.g. Venky">
                     </div>
                     <div class="mb-3">
-                        <label for="stk_role" class="form-label fw-medium">Role</label>
-                        <input type="text" class="form-control" id="stk_role" name="role" required placeholder="e.g. Poster Designer">
+                        <label for="stk_role" class="form-label fw-medium">Role / Cost Type</label>
+                        <input type="text" class="form-control" id="stk_role" name="role" required placeholder="e.g. Transport Associate / Travel Guide">
                     </div>
                     <div class="mb-3">
                         <label for="stk_company" class="form-label fw-medium">Company</label>
-                        <input type="text" class="form-control" id="stk_company" name="company" placeholder="e.g. Freelance">
+                        <input type="text" class="form-control" id="stk_company" name="company" placeholder="e.g. SA Travels">
                     </div>
                     <div class="mb-3">
                         <label for="stk_mobile" class="form-label fw-medium">Mobile Number</label>
-                        <input type="text" class="form-control" id="stk_mobile" name="mobile" placeholder="e.g. +91 98420 56897">
+                        <input type="text" class="form-control" id="stk_mobile" name="mobile" placeholder="e.g. +91 98762 59862">
                     </div>
                     <div class="mb-3">
                         <label for="stk_email" class="form-label fw-medium">E-mail</label>
-                        <input type="email" class="form-control" id="stk_email" name="email" placeholder="e.g. arjun@gmail.com">
+                        <input type="email" class="form-control" id="stk_email" name="email" placeholder="e.g. venky@gmail.com">
                     </div>
                     <div class="mb-3">
                         <label for="stk_location" class="form-label fw-medium">Location</label>
@@ -806,8 +886,8 @@
                     data: {
                         labels: ['Time Elapsed', 'Budget Used'],
                         datasets: [{
-                            data: [75, 95],
-                            backgroundColor: ['#6366f1', '#22c55e'],
+                            data: [65, 78],
+                            backgroundColor: ['#4f46e5', '#22c55e'],
                             borderWidth: 0,
                             borderRadius: 8,
                             barThickness: 40

@@ -302,3 +302,27 @@ ALTER TABLE `mstInfluencers`
     ADD COLUMN IF NOT EXISTS `dateOfOnboarding` DATETIME NULL AFTER `residentialAddress`,
     ADD COLUMN IF NOT EXISTS `influencerInterests` VARCHAR(500) NULL AFTER `dateOfOnboarding`,
     ADD COLUMN IF NOT EXISTS `paymentDetails` TEXT NULL AFTER `influencerInterests`;
+
+-- ============================================================
+-- Table: mstCreatorCodes
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `mstCreatorCodes` (
+    `mstCreatorCodeId` INT NOT NULL AUTO_INCREMENT,
+    `code` VARCHAR(100) NOT NULL,
+    `influencerId` INT NOT NULL,
+    `campaignId` INT NULL,
+    `totalUsages` INT NOT NULL DEFAULT 0,
+    `incentivePerUsage` DECIMAL(18, 2) NOT NULL DEFAULT 0.00,
+    `status` VARCHAR(50) NOT NULL DEFAULT 'Active',
+    `isActive` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`mstCreatorCodeId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ============================================================
+-- Seed Data: mstCreatorCodes
+-- ============================================================
+INSERT INTO `mstCreatorCodes` (`code`, `influencerId`, `campaignId`, `totalUsages`, `incentivePerUsage`, `status`, `isActive`, `created_at`) VALUES
+('IRFAN50', 1, 4, 1500, 20.00, 'Active', 1, NOW()),
+('BODYFIT20', 2, 1, 850, 15.00, 'Active', 1, NOW());
+

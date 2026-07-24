@@ -31,20 +31,22 @@ namespace CampaignManagement.Controllers
             // Determine date range from params
             DateTime? filterFrom = fromDate;
             DateTime? filterTo = toDate;
+            int selectedDays = days ?? (fromDate.HasValue || toDate.HasValue ? 0 : 30);
 
-            if (days.HasValue && days.Value > 0)
+            if (selectedDays > 0)
             {
                 filterTo = DateTime.Now;
-                filterFrom = DateTime.Now.AddDays(-days.Value);
+                filterFrom = DateTime.Now.AddDays(-selectedDays);
             }
             else if (!fromDate.HasValue && !toDate.HasValue)
             {
                 // Default to last 30 days
+                selectedDays = 30;
                 filterTo = DateTime.Now;
                 filterFrom = DateTime.Now.AddDays(-30);
             }
 
-            ViewBag.Days = days ?? 30;
+            ViewBag.Days = selectedDays;
             ViewBag.FromDate = filterFrom?.ToString("yyyy-MM-dd");
             ViewBag.ToDate = filterTo?.ToString("yyyy-MM-dd");
 
