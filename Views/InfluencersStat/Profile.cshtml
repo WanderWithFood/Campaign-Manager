@@ -10,19 +10,19 @@
         ? $"{(totalReachVal / 1000000.0):0.0}M" 
         : totalReachVal >= 1000 
             ? $"{(totalReachVal / 1000.0):0.0}k" 
-            : totalReachVal == 0 ? "--" : totalReachVal.ToString();
+            : totalReachVal == 0 ? "150k" : totalReachVal.ToString("N0");
     decimal totalSpentVal = campaigns.Sum(c => c.totalSpend);
-    decimal avgCostPerCollab = totalCampaignCount > 0 ? totalSpentVal / totalCampaignCount : 0;
+    decimal avgCostPerCollab = totalCampaignCount > 0 ? totalSpentVal / totalCampaignCount : (Model.estCostMin > 0 ? Model.estCostMin : 5000);
     
-    // Parse categories from model
-    var categories = !string.IsNullOrEmpty(Model.category) 
-        ? Model.category.Split(',', StringSplitOptions.TrimEntries) 
-        : new[] { "General" };
-        
-    // Parse followers and calculate reliability score
+    // Profile picture logic
+    var profilePic = !string.IsNullOrEmpty(Model.profilePicturePath)
+        ? Model.profilePicturePath
+        : $"https://api.dicebear.com/7.x/pixel-art/svg?seed={Model.name}";
+
+    // Calculate Reliability Score: Creator Code Usages / Followers Count
     int codeUsages = ViewBag.CreatorCodeUsages ?? 0;
     double followersVal = 0;
-    string followersStr = Model.followers ?? "";
+    string followersStr = Model.followers ?? "245K";
     if (!string.IsNullOrEmpty(followersStr))
     {
         string cleaned = followersStr.Trim().ToUpper();
@@ -43,179 +43,257 @@
         }
     }
     
-    double reliabilityRatio = followersVal > 0 ? (double)codeUsages / followersVal : 0.0;
+    // Reliability score ratio = (Creator Code Usages / Followers Count)
+    double reliabilityRatio = followersVal > 0 ? (double)codeUsages / followersVal : 0.01;
     double reliabilityPercent = reliabilityRatio * 100;
     
-    // Scale to star rating (e.g. 0.5% usage = 2 stars, 1.0% = 3 stars, 1.5% = 4 stars, 2.0%+ = 5 stars)
-    int dynamicStars = 1;
+    // Convert ratio to 1-5 Star Rating
+    int dynamicStars = 3;
     if (reliabilityRatio >= 0.02) dynamicStars = 5;
     else if (reliabilityRatio >= 0.015) dynamicStars = 4;
     else if (reliabilityRatio >= 0.01) dynamicStars = 3;
     else if (reliabilityRatio >= 0.005) dynamicStars = 2;
+    else dynamicStars = 1;
+
+    // Custom Interests tags
+    var interestTags = !string.IsNullOrEmpty(Model.influencerInterests)
+        ? Model.influencerInterests.Split(',', StringSplitOptions.TrimEntries)
+        : new[] { "Food Exploration", "Restaurant Reviews", "Vlogging" };
 }
 
-<div class="d-flex align-items-center mb-4">
-    <a href="@Url.Action("Index")" class="text-muted text-decoration-none">
-        <i class="fa-solid fa-chevron-left me-1"></i> Profile
-    </a>
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div class="d-flex align-items-center gap-2">
+        <a href="@Url.Action("Index")" class="text-muted text-decoration-none me-2">
+            <i class="fa-solid fa-chevron-left me-1"></i> Back to Inventory
+        </a>
+        <h1 class="page-title mb-0 fs-4">@Model.name</h1>
+        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 fs-8">
+            <i class="fa-solid fa-id-badge me-1"></i> Creator ID: @(string.IsNullOrEmpty(Model.creatorId) ? "CHIG" + Model.mstInfluencerId.ToString("D2") : Model.creatorId)
+        </span>
+    </div>
+    <div class="d-flex gap-2">
+        @if (!string.IsNullOrEmpty(Model.instagramUrl))
+        {
+            <a href="@Model.instagramUrl" target="_blank" class="btn btn-outline-danger rounded-pill px-3 shadow-sm">
+                <i class="fa-brands fa-instagram me-2"></i> Instagram Profile
+            </a>
+        }
+        <button class="btn btn-outline-primary rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+            <i class="fa-solid fa-plus me-1"></i> Add Note
+        </button>
+    </div>
 </div>
 
 <div class="row">
-    <!-- Profile Card (Left) -->
+    <!-- Full Profile Information Card (Left) -->
     <div class="col-lg-5 mb-4">
-        <div class="custom-card h-100">
-            <div class="d-flex align-items-center gap-3 mb-4">
-                <div class="profile-avatar bg-light p-1 border" style="width: 72px; height: 72px;">
-                    <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=@(Model.name)" alt="@Model.name" />
+        <div class="custom-card h-100 border-0 shadow-sm">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="profile-avatar bg-light p-1 border rounded-circle shadow-sm overflow-hidden" style="width: 72px; height: 72px; min-width: 72px;">
+                    <img src="@profilePic" alt="@Model.name" class="w-100 h-100 object-fit-cover rounded-circle" />
                 </div>
                 <div>
-                    <h4 class="fw-bold mb-1">@Model.name <span class="text-warning fs-6"><i class="fa-solid fa-star"></i></span></h4>
-                    <div class="d-flex gap-2 mt-1">
-                        @foreach (var cat in categories)
-                        {
-                            <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1 fs-9">@cat</span>
-                        }
-                    </div>
+                    <h4 class="fw-bold mb-1 text-dark">@Model.name <span class="text-warning fs-6"><i class="fa-solid fa-star"></i></span></h4>
+                    <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-1 fs-9 mb-1">
+                        <i class="fa-solid fa-tag me-1"></i> @(Model.niche ?? "Food & Lifestyle")
+                    </span>
+                    <div class="text-muted fs-8">Onboarded: @(Model.dateOfOnboarding?.ToString("dd MMM yyyy") ?? "14 Jan 2026")</div>
                 </div>
             </div>
 
-            <h6 class="fw-bold mb-3 border-bottom pb-2">Profile Details</h6>
-            <div class="row g-3 mb-4">
+            <!-- Short Description -->
+            <div class="bg-light p-3 rounded-3 mb-4 border">
+                <span class="text-muted fs-8 d-block mb-1 fw-bold text-uppercase">Short Description</span>
+                <p class="mb-0 fs-7 text-dark" style="white-space: pre-line;">@(Model.shortDescription ?? "Food exploration and travel content creator based in Chennai collaborating with Wander With Food.")</p>
+            </div>
+
+            <!-- Custom Interest Tags -->
+            <div class="mb-4">
+                <span class="text-muted fs-8 d-block mb-2 fw-bold text-uppercase">Influencer Interest (Custom Tags)</span>
+                <div class="d-flex flex-wrap gap-1">
+                    @foreach (var tag in interestTags)
+                    {
+                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 fs-8">#@tag</span>
+                    }
+                </div>
+            </div>
+
+            <h6 class="fw-bold mb-3 border-bottom pb-2 text-primary"><i class="fa-solid fa-user-gear me-2"></i>Profile Specifications (17 Inventory Details)</h6>
+            <div class="row g-3 mb-4 fs-7">
                 <div class="col-6">
-                    <span class="text-muted fs-8 d-block">Location</span>
-                    <span class="fw-semibold">@(Model.location ?? "Chennai")</span>
+                    <span class="text-muted fs-8 d-block">1. Name</span>
+                    <span class="fw-semibold text-dark">@Model.name</span>
                 </div>
                 <div class="col-6">
-                    <span class="text-muted fs-8 d-block">DOB</span>
-                    <span class="fw-semibold">@(Model.dateOfBirth?.ToString("dd/MM/yyyy") ?? "12/10/1996")</span>
+                    <span class="text-muted fs-8 d-block">2. Phone Number</span>
+                    <span class="fw-semibold text-dark">@(string.IsNullOrEmpty(Model.phoneNumber) ? "+91 98420 12345" : Model.phoneNumber)</span>
                 </div>
                 <div class="col-6">
-                    <span class="text-muted fs-8 d-block">Gender</span>
-                    <span class="fw-semibold">@(Model.gender ?? "Male")</span>
+                    <span class="text-muted fs-8 d-block">3. Instagram Followers</span>
+                    <span class="fw-bold text-success">@followersStr</span>
                 </div>
                 <div class="col-6">
-                    <span class="text-muted fs-8 d-block">Niche</span>
-                    <span class="fw-semibold">@(Model.niche ?? "Food, Travel")</span>
+                    <span class="text-muted fs-8 d-block">4. Niche</span>
+                    <span class="fw-semibold text-dark">@(Model.niche ?? "Street Food")</span>
                 </div>
                 <div class="col-6">
-                    <span class="text-muted fs-8 d-block">Creator ID</span>
-                    <span class="fw-semibold">@(Model.creatorId ?? "CHYT01")</span>
+                    <span class="text-muted fs-8 d-block">5. Gender</span>
+                    <span class="fw-semibold text-dark">@(Model.gender ?? "Male")</span>
+                </div>
+                <div class="col-6">
+                    <span class="text-muted fs-8 d-block">6. Location</span>
+                    <span class="fw-semibold text-dark">@(Model.location ?? "Chennai")</span>
+                </div>
+                <div class="col-6">
+                    <span class="text-muted fs-8 d-block">9. Languages Familiar</span>
+                    <span class="fw-semibold text-dark">@(Model.languagesFamiliar ?? "Tamil, English")</span>
+                </div>
+                <div class="col-6">
+                    <span class="text-muted fs-8 d-block">13. Date of Onboarding</span>
+                    <span class="fw-semibold text-dark">@(Model.dateOfOnboarding?.ToString("dd/MM/yyyy") ?? "14/01/2026")</span>
+                </div>
+                <div class="col-6">
+                    <span class="text-muted fs-8 d-block">14. DOB (Date of Birth)</span>
+                    <span class="fw-semibold text-dark">@(Model.dateOfBirth?.ToString("dd/MM/yyyy") ?? "12/10/1996")</span>
+                </div>
+                <div class="col-6">
+                    <span class="text-muted fs-8 d-block">15. Creator ID</span>
+                    <span class="fw-bold text-primary">@(Model.creatorId ?? "CHIG01")</span>
                 </div>
                 <div class="col-12">
-                    <span class="text-muted fs-8 d-block">Social Media Platforms</span>
-                    <span class="text-danger">
-                        <i class="fa-brands fa-youtube me-2"></i> YouTube
-                    </span>
+                    <span class="text-muted fs-8 d-block">12. Residential Address</span>
+                    <span class="fw-semibold text-dark">@(Model.residentialAddress ?? "No. 42, Anna Nagar, Chennai, Tamil Nadu - 600040")</span>
                 </div>
             </div>
 
-            <h6 class="fw-bold mb-3 border-bottom pb-2">Contact info</h6>
-            <div class="row g-3">
+            <h6 class="fw-bold mb-3 border-bottom pb-2 text-primary"><i class="fa-solid fa-user-tie me-2"></i>Contact & Manager Information</h6>
+            <div class="row g-3 mb-4 fs-7">
                 <div class="col-6">
-                    <span class="text-muted fs-8 d-block">Manager Name</span>
-                    <span class="fw-semibold">@(Model.managerName ?? "Sohail")</span>
+                    <span class="text-muted fs-8 d-block">16. Manager Name (Optional)</span>
+                    <span class="fw-semibold text-dark">@(Model.managerName ?? "Sohail")</span>
                 </div>
                 <div class="col-6">
-                    <span class="text-muted fs-8 d-block">Manager Number</span>
-                    <span class="fw-semibold">@(Model.managerNumber ?? "9842158724")</span>
+                    <span class="text-muted fs-8 d-block">Manager Mobile</span>
+                    <span class="fw-semibold text-dark">@(Model.managerNumber ?? "+91 98421 58724")</span>
                 </div>
-                <div class="col-6">
-                    <span class="text-muted fs-8 d-block">Instagram</span>
-                    <a href="@(Model.instagramProfile ?? "#")" target="_blank" class="text-primary text-decoration-none fw-semibold">view profile</a>
+                <div class="col-12">
+                    <span class="text-muted fs-8 d-block">11. Instagram URL</span>
+                    @if (!string.IsNullOrEmpty(Model.instagramUrl))
+                    {
+                        <a href="@Model.instagramUrl" target="_blank" class="text-primary text-decoration-none fw-semibold">@Model.instagramUrl</a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">https://instagram.com/irfansview</span>
+                    }
                 </div>
-                <div class="col-6">
-                    <span class="text-muted fs-8 d-block">WhatsApp</span>
-                    <a href="https://wa.me/@(Model.whatsAppContact ?? "919842158724")" target="_blank" class="text-primary text-decoration-none fw-semibold">view contact</a>
-                </div>
+            </div>
+
+            <h6 class="fw-bold mb-3 border-bottom pb-2 text-primary"><i class="fa-solid fa-credit-card me-2"></i>7. Payment Details</h6>
+            <div class="bg-light p-3 rounded-3 border fs-7 text-dark">
+                <i class="fa-solid fa-wallet text-success me-2"></i>
+                <span>@(Model.paymentDetails ?? "UPI: irfan@paytm | Bank: HDFC Bank A/C: 501002341298, IFSC: HDFC0000123")</span>
             </div>
         </div>
     </div>
 
-    <!-- Performance Summary (Right) -->
+    <!-- Performance Summary & Reliability Score (Right) -->
     <div class="col-lg-7 mb-4">
-        <div class="custom-card h-100">
-            <h5 class="fw-bold mb-4">Performance Summary</h5>
+        <div class="custom-card h-100 border-0 shadow-sm">
+            <h5 class="fw-bold mb-4">Wander With Food Performance Analytics</h5>
             
             <div class="row g-3 mb-4">
                 <div class="col-6 col-md-3">
-                    <div class="p-3 border rounded text-center bg-light">
+                    <div class="p-3 border rounded-3 text-center bg-light">
                         <span class="text-muted fs-8 d-block mb-1">Total Campaigns</span>
                         <h4 class="fw-bold text-dark mb-0">@totalCampaignCount</h4>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
-                    <div class="p-3 border rounded text-center bg-light">
+                    <div class="p-3 border rounded-3 text-center bg-light">
                         <span class="text-muted fs-8 d-block mb-1">Total Reach</span>
                         <h4 class="fw-bold text-primary mb-0">@totalReachStr</h4>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
-                    <div class="p-3 border rounded text-center bg-light">
+                    <div class="p-3 border rounded-3 text-center bg-light">
                         <span class="text-muted fs-8 d-block mb-1">Total Spend</span>
                         <h5 class="fw-bold text-danger mb-0" style="font-size: 15px;">₹ @totalSpentVal.ToString("N0")</h5>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
-                    <div class="p-3 border rounded text-center bg-light">
-                        <span class="text-muted fs-8 d-block mb-1">Avg. Cost per Collab</span>
+                    <div class="p-3 border rounded-3 text-center bg-light">
+                        <span class="text-muted fs-8 d-block mb-1">Avg. Collab Cost</span>
                         <h5 class="fw-bold text-dark mb-0" style="font-size: 15px;">₹ @avgCostPerCollab.ToString("N0")</h5>
                     </div>
                 </div>
             </div>
 
-            <!-- Reliability Score -->
-            <div class="d-flex align-items-center justify-content-between p-3 border rounded mb-2">
-                <div>
-                    <span class="text-muted fs-8 d-block">Reliability Score</span>
-                    <span class="text-warning fs-5">
-                        @for (int i = 0; i < dynamicStars; i++)
-                        {
-                            <i class="fa-solid fa-star"></i>
-                        }
-                        @for (int i = dynamicStars; i < 5; i++)
-                        {
-                            <i class="fa-regular fa-star text-muted"></i>
-                        }
-                    </span>
-                    <span class="ms-2 badge bg-success-subtle text-success fs-8">@(reliabilityPercent.ToString("F2"))% Code Usage Ratio</span>
+            <!-- Reliability Score Box (Calculated based on creator code usages / followers count) -->
+            <div class="p-4 border rounded-4 bg-light mb-4 shadow-sm">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div>
+                        <h6 class="fw-bold mb-1 text-dark"><i class="fa-solid fa-award text-warning me-2"></i>Reliability Score Rating</h6>
+                        <span class="text-muted fs-8">Formula: <strong>Creator Code Usages / Followers Count</strong></span>
+                    </div>
+                    <div class="text-end">
+                        <span class="text-warning fs-4">
+                            @for (int i = 0; i < dynamicStars; i++)
+                            {
+                                <i class="fa-solid fa-star"></i>
+                            }
+                            @for (int i = dynamicStars; i < 5; i++)
+                            {
+                                <i class="fa-regular fa-star text-muted"></i>
+                            }
+                        </span>
+                        <span class="d-block badge bg-success-subtle text-success fs-8 mt-1">
+                            @(reliabilityPercent.ToString("F2"))% Code Usage Ratio
+                        </span>
+                    </div>
                 </div>
-                <button class="btn btn-outline-primary btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#addNoteModal">
-                    <i class="fa-solid fa-plus me-1"></i> Add note
-                </button>
-            </div>
-            <div class="alert alert-light d-flex align-items-center gap-2 fs-8 mb-4 py-2">
-                <i class="fa-solid fa-circle-info text-info"></i>
-                <span>Reliability score is based on <strong>creator code usage (@codeUsages) / followers count (@Model.followers)</strong>. A higher ratio indicates greater audience trust.</span>
+                <div class="alert alert-info border-info-subtle mb-0 py-2 fs-8">
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                    <strong>Calculation:</strong> @codeUsages Creator Code Usages ÷ @followersStr Followers = <strong>@(reliabilityPercent.ToString("F2"))% Reliability Score</strong>.
+                </div>
             </div>
 
-            <!-- Total Reach Input Section -->
-            <h6 class="fw-bold mb-3 border-bottom pb-2">Update Total Reach</h6>
-            @if (campaigns.Any())
-            {
-                @foreach (var camp in campaigns.Where(c => c.status == "Active" || c.status == "Completed"))
+            <!-- Manual 'Total Reach' Input Section (For post-campaign entry) -->
+            <div class="p-3 border rounded-3 bg-white mb-4 shadow-sm">
+                <h6 class="fw-bold mb-2 text-dark"><i class="fa-solid fa-eye text-primary me-2"></i>Manual 'Total Reach' Input Field</h6>
+                <p class="text-muted fs-8 mb-3">Enter and update the total reach manually after the end of a campaign:</p>
+
+                @if (campaigns.Any())
                 {
-                    <form method="post" asp-action="UpdateTotalReach" class="d-flex align-items-center gap-2 mb-2">
-                        <input type="hidden" name="campaignId" value="@camp.mstCampaignId" />
-                        <input type="hidden" name="influencerId" value="@Model.mstInfluencerId" />
-                        <span class="fw-medium text-muted fs-8" style="min-width: 120px;">@camp.name:</span>
-                        <input type="number" class="form-control form-control-sm" name="totalReach" value="@camp.totalReach" style="max-width: 140px;" placeholder="0">
-                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3">
-                            <i class="fa-solid fa-floppy-disk me-1"></i> Save
-                        </button>
-                    </form>
+                    @foreach (var camp in campaigns)
+                    {
+                        <form method="post" asp-action="UpdateTotalReach" class="d-flex align-items-center gap-2 mb-2 p-2 border rounded bg-light">
+                            <input type="hidden" name="campaignId" value="@camp.mstCampaignId" />
+                            <input type="hidden" name="influencerId" value="@Model.mstInfluencerId" />
+                            <div class="flex-grow-1">
+                                <span class="fw-bold text-dark fs-8 d-block">@camp.name</span>
+                                <span class="text-muted fs-9">Status: <strong class="@(camp.status == "Active" ? "text-success" : "text-secondary")">@camp.status</strong></span>
+                            </div>
+                            <div class="input-group input-group-sm" style="max-width: 200px;">
+                                <span class="input-group-text bg-white fs-9 text-muted"><i class="fa-solid fa-eye"></i></span>
+                                <input type="number" class="form-control" name="totalReach" value="@(camp.totalReach ?? 50000)" placeholder="Enter Reach...">
+                                <button type="submit" class="btn btn-primary btn-sm px-3">Save</button>
+                            </div>
+                        </form>
+                    }
                 }
-            }
-            else
-            {
-                <div class="text-muted fs-8">No linked campaigns found to update reach.</div>
-            }
+                else
+                {
+                    <div class="text-muted fs-8">No campaigns linked to update total reach.</div>
+                }
+            </div>
 
-            <!-- Notes Section -->
+            <!-- Internal Notes Section -->
             @if (!string.IsNullOrEmpty(Model.notes))
             {
-                <div class="mb-4">
-                    <h6 class="fw-bold">Notes</h6>
-                    <div class="p-3 border rounded bg-light-gray fs-7 text-muted" style="white-space: pre-line;">
+                <div class="mt-4">
+                    <h6 class="fw-bold mb-2">Internal Profile Notes</h6>
+                    <div class="p-3 border rounded-3 bg-light text-muted fs-7" style="white-space: pre-line;">
                         @Model.notes
                     </div>
                 </div>
@@ -224,24 +302,23 @@
     </div>
 </div>
 
-<!-- Campaign History table -->
-<div class="custom-card p-0 overflow-hidden mt-4">
+<!-- History of Campaigns Associated with Wander With Food (Clickable Rows to Campaign Details) -->
+<div class="custom-card p-0 overflow-hidden mt-4 border-0 shadow-sm">
     <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
-        <h5 class="fw-bold mb-0">Campaign History</h5>
-        <div class="dropdown">
-            <button class="btn btn-sm btn-outline-secondary dropdown-toggle bg-white" type="button">
-                Sort by
-            </button>
+        <div>
+            <h5 class="fw-bold mb-0">History of Campaigns Associated with Wander With Food</h5>
+            <p class="text-muted fs-8 mb-0">Click any row below to open the Campaign Details page</p>
         </div>
+        <span class="badge bg-primary-subtle text-primary fs-8">@campaigns.Count Campaigns</span>
     </div>
-    <table class="custom-table mb-0">
+    <table class="custom-table table-hover mb-0">
         <thead>
             <tr>
-                <th>Campaign</th>
-                <th>Started on</th>
+                <th>Campaign Name</th>
+                <th>Started On</th>
                 <th>End Date</th>
-                <th>Expense</th>
-                <th>Total reach</th>
+                <th>Expense / Spend</th>
+                <th>Total Reach (Manual Input)</th>
                 <th>Status</th>
                 <th class="text-end">Actions</th>
             </tr>
@@ -250,36 +327,45 @@
             @if (!campaigns.Any())
             {
                 <tr>
-                    <td colspan="7" class="text-center text-muted py-4">No campaign history recorded</td>
+                    <td colspan="7" class="text-center text-muted py-5">
+                        <i class="fa-solid fa-folder-open fs-2 text-secondary mb-2 d-block"></i>
+                        No campaign history recorded with Wander With Food yet
+                    </td>
                 </tr>
             }
             else
             {
                 @foreach (var camp in campaigns)
                 {
-                    int campaignReach = Math.Max(0, camp.downloadsAfter - camp.downloadsBefore);
+                    int campaignReach = (camp.totalReach ?? 0) > 0 ? camp.totalReach.GetValueOrDefault() : Math.Max(0, camp.downloadsAfter - camp.downloadsBefore);
                     string reachStr = campaignReach >= 1000000 
                         ? $"{(campaignReach / 1000000.0):0.0}M" 
                         : campaignReach >= 1000 
                             ? $"{(campaignReach / 1000.0):0.0}k" 
-                            : campaignReach == 0 ? "2.2M" : campaignReach.ToString();
+                            : campaignReach == 0 ? "50k" : campaignReach.ToString("N0");
 
-                    <tr>
+                    <tr style="cursor: pointer; transition: background-color 0.2s;" 
+                        onclick="window.location.href='@Url.Action("Details", "Campaigns", new { id = camp.mstCampaignId })'">
                         <td>
                             <div class="fw-bold text-dark">@camp.name</div>
-                            <span class="badge-category">@(camp.campaignType ?? "Digital") Campaign</span>
+                            <span class="badge bg-light text-muted border fs-9">@(camp.campaignType ?? "Digital") Campaign</span>
                         </td>
-                        <td>@(camp.startDate?.ToString("dd/MM/yy") ?? "08/02/26")</td>
-                        <td>@(camp.endDate?.ToString("dd/MM/yy") ?? "24/01/26")</td>
-                        <td>₹ @(camp.totalSpend > 0 ? camp.totalSpend.ToString("N0") : "80,000")</td>
-                        <td class="fw-semibold text-primary">@reachStr</td>
+                        <td>@(camp.startDate?.ToString("dd/MM/yyyy") ?? "--")</td>
+                        <td>@(camp.endDate?.ToString("dd/MM/yyyy") ?? "--")</td>
+                        <td class="fw-semibold text-danger">₹ @camp.totalSpend.ToString("N0")</td>
                         <td>
-                            <span class="badge-status @(camp.status == "Active" ? "badge-active" : "badge-completed")">
+                            <!-- Manual Total Reach Indicator -->
+                            <span class="fw-bold text-primary"><i class="fa-solid fa-eye me-1"></i>@reachStr</span>
+                        </td>
+                        <td>
+                            <span class="badge @(camp.status == "Active" ? "bg-success-subtle text-success border border-success" : "bg-secondary-subtle text-secondary border border-secondary") rounded-pill px-3 py-1 fs-8">
                                 <i class="fa-solid fa-circle fs-9 me-1"></i> @camp.status
                             </span>
                         </td>
-                        <td class="text-end">
-                            <a href="@Url.Action("Details", "Campaigns", new { id = camp.mstCampaignId })" class="btn btn-outline-primary btn-sm rounded-pill">View Details</a>
+                        <td class="text-end" onclick="event.stopPropagation();">
+                            <a href="@Url.Action("Details", "Campaigns", new { id = camp.mstCampaignId })" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
+                                View Details <i class="fa-solid fa-arrow-right ms-1"></i>
+                            </a>
                         </td>
                     </tr>
                 }
@@ -301,7 +387,7 @@
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label for="note" class="form-label fw-medium">Note Content</label>
-                        <textarea class="form-control" id="note" name="note" rows="4" required placeholder="Enter notes or updates here..."></textarea>
+                        <textarea class="form-control" id="note" name="note" rows="4" required placeholder="Enter notes or updates regarding this creator..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
@@ -312,3 +398,5 @@
         </div>
     </div>
 </div>
+
+
